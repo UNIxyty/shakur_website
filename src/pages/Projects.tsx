@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLang } from '../lang';
 import { useProjects } from '../lib/useProjects';
+import { pick } from '../lib/db';
+import { coverSrc } from '../data';
 import { gradients } from '../tokens';
 import { Pin } from '../components/icons';
 import { Reveal, RevealGroup, RevealItem } from '../components/Reveal';
@@ -11,7 +13,7 @@ import { tapPress } from '../motion';
 import { bgImage } from '../lib/assets';
 
 export default function Projects() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { projects } = useProjects();
   const [visible, setVisible] = useState(4);
 
@@ -46,14 +48,14 @@ export default function Projects() {
             {shown.map((proj) => (
               <RevealItem key={proj.slug}>
                 <Link
-                  to={`/project/${proj.slug}`}
+                  to={`/projects/${proj.slug}`}
                   className="group relative block overflow-hidden"
                   style={{ aspectRatio: '1.62', borderRadius: 16 }}
                 >
                   <div
                     className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.04]"
                     style={{
-                      backgroundImage: bgImage(proj.img),
+                      backgroundImage: bgImage(coverSrc(proj)),
                       backgroundSize: 'cover',
                       backgroundPosition: '50% 50%',
                     }}
@@ -64,7 +66,7 @@ export default function Projects() {
                     style={{ left: 24, right: 24, bottom: 22, gap: 6 }}
                   >
                     <span className="font-semibold" style={{ fontSize: 22, letterSpacing: '-0.4px' }}>
-                      {proj.title}
+                      {pick(proj.i18n.title, lang)}
                     </span>
                     <span
                       className="inline-flex items-center"

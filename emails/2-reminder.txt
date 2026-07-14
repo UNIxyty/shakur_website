@@ -1,0 +1,26 @@
+Subject: Reminder: your meeting is {{time_until}} away
+
+SHAKUR
+
+STARTS IN {{time_until}}
+
+YOUR MEETING IS {{time_until}} AWAY
+
+Hi {{attendee_name}},
+
+This is a friendly reminder about your upcoming meeting with {{host_name}}:
+
+  Date:      {{meeting_date}}
+  Time:      {{meeting_time}} ({{timezone}})
+  Duration:  {{duration}}
+  Location:  {{location_or_link}}
+
+Reschedule:     {{reschedule_link}}
+Cancel meeting: {{cancel_link}}
+
+Questions before we meet? Contact us at {{support_email}}.
+
+--
+{{company_name}} · Rīga, Latvia
+You received this reminder because you have an upcoming meeting with us.
+Manage booking: {{reschedule_link}}

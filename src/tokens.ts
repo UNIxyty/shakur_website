@@ -49,6 +49,46 @@ export const colors = {
 
   /** G2 badge in the footer. */
   g2: '#FB5C35',
+
+  /* --- v2 additions, extracted literally from ShakurAdminPanel.dc.html /
+     ShakurDashboard.dc.html / Dropdown.dc.html / DatePicker.dc.html. --- */
+
+  /** Danger actions — delete buttons, error toasts, canceled meeting chips. */
+  danger: '#D64545',
+  /** Soft danger surface behind canceled / error states. */
+  dangerBg: '#FBE7E7',
+  /** Dropdown selected option bg, DatePicker "today" bg, admin soft-orange chips. */
+  peach: '#FFF3E4',
+  /** Deeper peach — admin hover state of peach chips / highlighted rows. */
+  peachDeep: '#FFEAD0',
+  /** "Paused" / partial-state chip text. */
+  amber: '#B7791F',
+  /** "Paused" / partial-state chip background. */
+  amberBg: '#FDF0DC',
+  /** Admin headings ink — slightly lifted from `ink`. */
+  ink2: '#3B3733',
+  /** Admin secondary text (same value family as `muted`, admin naming). */
+  gray650: '#54504D',
+  /** Admin tertiary text — table meta, timestamps, collapsed labels. */
+  gray450: '#8A8580',
+  /** Admin hairline dividers (lighter than borderInput). */
+  line2: '#F2F1EF',
+  /** Admin filled controls — search field, segmented control track. */
+  fill2: '#F0EFEC',
+  /** Admin card / panel border (same value as borderInput, admin naming). */
+  line3: '#E7E5E4',
+  /** Admin custom scrollbar thumb. */
+  scroll: '#E0DEDB',
+  /** Disabled DatePicker days, muted admin icons (same value as stone). */
+  mist: '#D6D3D1',
+  /** "Scheduled" meeting chip background. */
+  chipBlueBg: '#E9EDF7',
+  /** "Scheduled" meeting chip text. */
+  chipBlue: '#3B5BA5',
+  /** "Rescheduled" chip background. */
+  chipPurpleBg: '#F3E8F5',
+  /** "Rescheduled" chip text. */
+  chipPurple: '#8A4F9E',
 } as const;
 
 /** Alpha colors used verbatim in the design. */

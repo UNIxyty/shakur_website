@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Meeting update</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<![endif]-->
+<style>
+  body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table { border-collapse: collapse; }
+  img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+  a { text-decoration: none; }
+  @media only screen and (max-width: 600px) {
+    .container { width: 100% !important; border-radius: 0 !important; }
+    .px { padding-left: 24px !important; padding-right: 24px !important; }
+    .btn-cell { display: block !important; width: 100% !important; padding: 0 0 12px 0 !important; }
+    .btn-gap { display: none !important; }
+    .btn-a { width: auto !important; }
+    .summary-label { width: 130px !important; }
+  }
+</style>
+</head>
+<body style="margin:0; padding:0; background-color:#F5F5F4;">
+
+<!-- ============================================================= -->
+<!--  ONE template, TWO variants. This scheduling system sends      -->
+<!--  either VARIANT A (canceled) or VARIANT B (rescheduled).       -->
+<!--  Keep whichever block matches meetings.status and delete the   -->
+<!--  other, OR wrap them in your engine's {{#if}} conditional.     -->
+<!--  Both are complete, standalone, send-ready emails.             -->
+<!-- ============================================================= -->
+
+
+<!-- ===================== VARIANT A — CANCELED ===================== -->
+<!--   Subject: Your meeting on {{meeting_date}} has been canceled    -->
+
+  <span style="display:none !important; visibility:hidden; mso-hide:all; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">Your meeting on {{meeting_date}} at {{meeting_time}} has been canceled. Book a new time whenever you're ready.</span>
+  <span style="display:none !important; visibility:hidden; mso-hide:all; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</span>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F5F4;">
+    <tr>
+      <td align="center" style="padding:32px 12px;">
+        <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600"><tr><td><![endif]-->
+        <table role="presentation" class="container" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px; max-width:600px; background-color:#FFFFFF; border:1px solid #EAEAE8; border-radius:16px; overflow:hidden;">
+
+          <tr><td style="height:5px; background-color:#160C00; font-size:0; line-height:0;">&nbsp;</td></tr>
+
+          <tr>
+            <td class="px" align="left" style="padding:28px 40px 8px 40px;">
+              <span style="font-family:Arial,Helvetica,sans-serif; font-size:22px; font-weight:bold; letter-spacing:4px; color:#160C00;">SHAKUR</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="px" align="left" style="padding:20px 40px 0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="width:52px; height:52px; background-color:#F0EFEC; border-radius:13px; text-align:center; vertical-align:middle; font-family:Arial,Helvetica,sans-serif; font-size:26px; color:#54504D; line-height:52px;">&#10005;</td></tr>
+              </table>
+              <h1 style="margin:20px 0 8px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:26px; line-height:1.25; font-weight:bold; color:#160C00; letter-spacing:-0.4px;">Your meeting has been canceled</h1>
+              <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:16px; line-height:1.6; color:#54504D;">Hi {{attendee_name}}, your meeting with {{host_name}} at {{company_name}} has been canceled. No further action is needed.</p>
+            </td>
+          </tr>
+
+          <!-- canceled details (muted / struck) -->
+          <tr>
+            <td class="px" style="padding:24px 40px 0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%; background-color:#FAFAF9; border:1px solid #EAEAE8; border-radius:12px;">
+                <tr>
+                  <td style="padding:18px 22px;">
+                    <p style="margin:0 0 4px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; color:#A8A29E;">Canceled meeting</p>
+                    <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:16px; color:#A8A29E; text-decoration:line-through;">{{meeting_date}} &middot; {{meeting_time}} ({{timezone}})</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- optional note -->
+          <tr>
+            <td class="px" style="padding:16px 40px 0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%; background-color:#FFF3E4; border-radius:12px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0 0 4px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; color:#B7791F;">Note from {{host_name}}</p>
+                    <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:15px; line-height:1.6; color:#54504D;">{{cancellation_note}}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- single primary button -->
+          <tr>
+            <td class="px" align="center" style="padding:28px 40px 8px 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr>
+                  <td align="center" bgcolor="#FB8500" style="border-radius:10px;">
+                    <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{booking_link}}" style="height:48px;v-text-anchor:middle;width:260px;" arcsize="21%" fillcolor="#FB8500" stroked="f"><w:anchorlock/><center style="color:#160C00;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Book a new time</center></v:roundrect><![endif]-->
+                    <!--[if !mso]><!-- -->
+                    <a href="{{booking_link}}" style="display:block; padding:14px 44px; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:16px; font-weight:bold; color:#160C00; text-align:center; border-radius:10px;">Book a new time</a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="px" align="center" style="padding:14px 40px 30px 40px;">
+              <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:14px; line-height:1.6; color:#A8A29E;">Questions? Contact us at <a href="mailto:{{support_email}}" style="color:#FB8500; font-weight:bold;">{{support_email}}</a>.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="border-top:1px solid #EAEAE8; background-color:#FAFAF9; padding:24px 40px;">
+              <p style="margin:0 0 6px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:13px; line-height:1.6; color:#54504D;"><strong style="color:#160C00;">{{company_name}}</strong> &middot; Rīga, Latvia</p>
+              <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#A8A29E;">You received this because a meeting with us was canceled.<br><a href="{{booking_link}}" style="color:#A8A29E; text-decoration:underline;">Book again</a></p>
+            </td>
+          </tr>
+
+        </table>
+        <!--[if mso]></td></tr></table><![endif]-->
+      </td>
+    </tr>
+  </table>
+<!-- =================== END VARIANT A — CANCELED =================== -->
+
+
+<!-- ================== VARIANT B — RESCHEDULED ===================== -->
+<!--  Subject: Your meeting has been moved to {{new_meeting_date}}    -->
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F5F5F4;">
+    <tr>
+      <td align="center" style="padding:32px 12px;">
+        <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600"><tr><td><![endif]-->
+        <table role="presentation" class="container" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px; max-width:600px; background-color:#FFFFFF; border:1px solid #EAEAE8; border-radius:16px; overflow:hidden;">
+
+          <tr><td style="height:5px; background-color:#FB8500; font-size:0; line-height:0;">&nbsp;</td></tr>
+
+          <tr>
+            <td class="px" align="left" style="padding:28px 40px 8px 40px;">
+              <span style="font-family:Arial,Helvetica,sans-serif; font-size:22px; font-weight:bold; letter-spacing:4px; color:#160C00;">SHAKUR</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="px" align="left" style="padding:20px 40px 0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="width:52px; height:52px; background-color:#FFF3E4; border-radius:13px; text-align:center; vertical-align:middle; font-family:Arial,Helvetica,sans-serif; font-size:26px; color:#FB8500; line-height:52px;">&#8635;</td></tr>
+              </table>
+              <h1 style="margin:20px 0 8px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:26px; line-height:1.25; font-weight:bold; color:#160C00; letter-spacing:-0.4px;">Your meeting has been moved</h1>
+              <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:16px; line-height:1.6; color:#54504D;">Hi {{attendee_name}}, your meeting with {{host_name}} has a new time. Here's what changed.</p>
+            </td>
+          </tr>
+
+          <!-- previous (struck) -->
+          <tr>
+            <td class="px" style="padding:24px 40px 0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%; background-color:#FAFAF9; border:1px solid #EAEAE8; border-radius:12px;">
+                <tr>
+                  <td style="padding:16px 22px;">
+                    <p style="margin:0 0 4px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; color:#A8A29E;">Previous time</p>
+                    <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:16px; color:#A8A29E; text-decoration:line-through;">{{meeting_date}} &middot; {{meeting_time}} ({{timezone}})</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- arrow -->
+          <tr><td align="center" style="padding:10px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; font-size:22px; color:#FB8500; line-height:1;">&#8595;</td></tr>
+
+          <!-- new time (prominent) -->
+          <tr>
+            <td class="px" style="padding:10px 40px 0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%; background-color:#FFF3E4; border:1.5px solid #FB8500; border-radius:12px;">
+                <tr>
+                  <td style="padding:20px 22px;">
+                    <p style="margin:0 0 6px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; color:#B7791F;">New time</p>
+                    <p style="margin:0 0 2px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:20px; font-weight:bold; color:#160C00;">{{new_meeting_date}}</p>
+                    <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:16px; color:#160C00;">{{new_meeting_time}} <span style="color:#B7791F;">({{timezone}})</span> &middot; {{duration}}</p>
+                    <p style="margin:12px 0 0 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:14px; color:#54504D;">{{location_or_link}}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- buttons -->
+          <tr>
+            <td class="px" style="padding:26px 40px 8px 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;">
+                <tr>
+                  <td class="btn-cell" style="width:50%; vertical-align:top;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;">
+                      <tr>
+                        <td align="center" bgcolor="#FB8500" style="border-radius:10px;">
+                          <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{reschedule_link}}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="21%" fillcolor="#FB8500" stroked="f"><w:anchorlock/><center style="color:#160C00;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">View / manage booking</center></v:roundrect><![endif]-->
+                          <!--[if !mso]><!-- -->
+                          <a class="btn-a" href="{{reschedule_link}}" style="display:block; padding:14px 16px; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:16px; font-weight:bold; color:#160C00; text-align:center; border-radius:10px;">View / manage booking</a>
+                          <!--<![endif]-->
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td class="btn-gap" width="14" style="font-size:0; line-height:0;">&nbsp;</td>
+                  <td class="btn-cell" style="width:50%; vertical-align:top;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;">
+                      <tr>
+                        <td align="center" bgcolor="#FFFFFF" style="border-radius:10px; border:1.5px solid #E0DDD9;">
+                          <a class="btn-a" href="{{cancel_link}}" style="display:block; padding:12.5px 20px; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:16px; font-weight:bold; color:#160C00; text-align:center; border-radius:10px;">Cancel</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="px" style="padding:12px 40px 30px 40px;">
+              <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:14px; line-height:1.6; color:#A8A29E;">Can't make the new time? Use the buttons above, or email <a href="mailto:{{support_email}}" style="color:#FB8500; font-weight:bold;">{{support_email}}</a>.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="border-top:1px solid #EAEAE8; background-color:#FAFAF9; padding:24px 40px;">
+              <p style="margin:0 0 6px 0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:13px; line-height:1.6; color:#54504D;"><strong style="color:#160C00;">{{company_name}}</strong> &middot; Rīga, Latvia</p>
+              <p style="margin:0; font-family:'Inter',Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#A8A29E;">You received this because your meeting with us was rescheduled.<br><a href="{{reschedule_link}}" style="color:#A8A29E; text-decoration:underline;">Manage booking</a></p>
+            </td>
+          </tr>
+
+        </table>
+        <!--[if mso]></td></tr></table><![endif]-->
+      </td>
+    </tr>
+  </table>
+<!-- ================ END VARIANT B — RESCHEDULED ================== -->
+
+</body>
+</html>

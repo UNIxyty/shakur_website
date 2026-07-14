@@ -240,7 +240,7 @@ export default function Home() {
             {services.map((svc) => (
               <RevealItem key={svc.slug}>
                 <Link
-                  to={`/service/${svc.slug}`}
+                  to={`/services/${svc.detail}`}
                   className="group relative block overflow-hidden text-white hover:text-white"
                   style={{ aspectRatio: '1.42', borderRadius: 16 }}
                 >
@@ -347,14 +347,14 @@ export default function Home() {
             {projects.map((sp) => (
               <RevealItem key={sp.slug}>
                 <Link
-                  to={`/project/${sp.slug}`}
+                  to={`/projects/${sp.slug}`}
                   className="group relative block overflow-hidden"
                   style={{ aspectRatio: '1.55', borderRadius: 14 }}
                 >
                   <div
                     className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
                     style={{
-                      backgroundImage: bgImage(sp.spaceImg),
+                      backgroundImage: bgImage(sp.space_img),
                       backgroundSize: 'cover',
                       backgroundPosition: '50% 50%',
                     }}

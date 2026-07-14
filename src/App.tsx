@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -9,9 +9,10 @@ import Services from './pages/Services';
 import ServiceDetail from './pages/ServiceDetail';
 import ProjectDetail from './pages/ProjectDetail';
 import Contact from './pages/Contact';
+import Booking from './pages/Booking';
 import NotFound from './pages/NotFound';
 import AdminLogin from './admin/AdminLogin';
-import AdminDashboard from './admin/AdminDashboard';
+import AdminPanel from './admin/AdminPanel';
 import RequireAuth from './admin/RequireAuth';
 import { useLang } from './lang';
 import { pageTransition } from './motion';
@@ -23,6 +24,22 @@ function ScrollToTop() {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+}
+
+/** v1 service slugs that were renamed in the v2 seed. */
+const LEGACY_SERVICE_SLUGS: Record<string, string> = {
+  interior: 'interior-finishing',
+  wood: 'wood-construction',
+};
+
+function LegacyServiceRedirect() {
+  const { slug = '' } = useParams<{ slug: string }>();
+  return <Navigate replace to={`/services/${LEGACY_SERVICE_SLUGS[slug] ?? slug}`} />;
+}
+
+function LegacyProjectRedirect() {
+  const { slug = '' } = useParams<{ slug: string }>();
+  return <Navigate replace to={`/projects/${slug}`} />;
 }
 
 function PublicSite() {
@@ -46,10 +63,14 @@ function PublicSite() {
             <Routes location={location}>
               <Route path="/" element={<Home />} />
               <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:slug" element={<ProjectDetail />} />
               <Route path="/services" element={<Services />} />
-              <Route path="/service/:slug" element={<ServiceDetail />} />
-              <Route path="/project/:slug" element={<ProjectDetail />} />
+              <Route path="/services/:slug" element={<ServiceDetail />} />
+              {/* v1 routes stay reachable via redirects. */}
+              <Route path="/service/:slug" element={<LegacyServiceRedirect />} />
+              <Route path="/project/:slug" element={<LegacyProjectRedirect />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/booking/:token" element={<Booking />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </motion.div>
@@ -70,7 +91,7 @@ export default function App() {
           path="/admin/*"
           element={
             <RequireAuth>
-              <AdminDashboard />
+              <AdminPanel />
             </RequireAuth>
           }
         />

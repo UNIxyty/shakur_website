@@ -66,13 +66,13 @@ export default function Footer() {
             <span className="text-ink font-medium" style={{ fontSize: 14, opacity: 0.7 }}>
               {t.foot_services}
             </span>
-            <Link to="/service/drywall" className={linkCls} style={{ fontSize: 16 }}>
+            <Link to="/services/drywall" className={linkCls} style={{ fontSize: 16 }}>
               {t.sv_drywall}
             </Link>
-            <Link to="/service/interior" className={linkCls} style={{ fontSize: 16 }}>
+            <Link to="/services/interior-finishing" className={linkCls} style={{ fontSize: 16 }}>
               {t.sv_interior}
             </Link>
-            <Link to="/service/emergency" className={linkCls} style={{ fontSize: 16 }}>
+            <Link to="/services/emergency" className={linkCls} style={{ fontSize: 16 }}>
               {t.sv_emergency}
             </Link>
             <Link to="/services" className={linkCls} style={{ fontSize: 16 }}>

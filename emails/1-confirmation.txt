@@ -1,0 +1,26 @@
+Subject: Your meeting is confirmed — {{meeting_date}} at {{meeting_time}}
+
+SHAKUR
+
+YOUR MEETING IS CONFIRMED
+
+Hi {{attendee_name}},
+
+You're booked in with {{host_name}} at {{company_name}}. Here are the details:
+
+  Date:      {{meeting_date}}
+  Time:      {{meeting_time}} ({{timezone}})
+  Duration:  {{duration}}
+  Location:  {{location_or_link}}
+
+A calendar invite (.ics) is attached — open it to add this meeting to your calendar.
+
+Reschedule:     {{reschedule_link}}
+Cancel meeting: {{cancel_link}}
+
+Need help? Reply to this email or contact us at {{support_email}}.
+
+--
+{{company_name}} · Rīga, Latvia
+You received this because you booked a meeting with us.
+Manage booking: {{reschedule_link}}

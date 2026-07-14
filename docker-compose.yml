@@ -21,6 +21,41 @@ services:
     # `curl http://127.0.0.1:3000` still works for debugging on the box.
     ports:
       - '127.0.0.1:3000:3000'
+    depends_on:
+      api:
+        # nginx resolves the api upstream lazily (resolver + variable in
+        # nginx.conf), so started is enough — no need to gate on healthy.
+        condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # Booking/AI API: Node Express on :8787, reachable ONLY through nginx's
+  # /api/ proxy — no published ports. Server-side secrets live here (never in
+  # VITE_* build args).
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      # Repo root as context: the image also copies ./emails templates.
+      context: .
+      dockerfile: server/Dockerfile
+    image: shakur-api
+    container_name: shakur-api
+    restart: unless-stopped
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-}
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-}
+    expose:
+      - '8787'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8787/api/health']
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
 
   # ---------------------------------------------------------------------------
   # Cloudflare Tunnel: publishes web:3000 at https://shakur.verxyl.com

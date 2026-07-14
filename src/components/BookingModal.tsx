@@ -7,6 +7,15 @@ import { pop } from '../motion';
 
 type Step = 'date' | 'time' | 'details' | 'done';
 
+/**
+ * Availability source:
+ *  - 'api'     — GET /api/slots for the 60-day window (days without slots disabled)
+ *  - 'demo'    — the API is unreachable; fall back to the design's local
+ *                SCHEDULING generation and don't persist the booking
+ *  - 'loading' — first fetch still in flight (all days disabled)
+ */
+type SlotSource = 'loading' | 'api' | 'demo';
+
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
 const toMinutes = (hhmm: string) => {
@@ -14,7 +23,10 @@ const toMinutes = (hhmm: string) => {
   return h * 60 + m;
 };
 
-/** Generate the bookable slots for a day from the scheduling config. */
+const isoOf = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Generate the bookable slots for a day from the local scheduling config (demo mode). */
 function generateSlots(): string[] {
   const start = toMinutes(SCHEDULING.start);
   const end = toMinutes(SCHEDULING.end);
@@ -27,7 +39,7 @@ function generateSlots(): string[] {
 }
 
 export default function BookingModal({ onClose }: { onClose: () => void }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   const [step, setStep] = useState<Step>('date');
   const [monthOffset, setMonthOffset] = useState(0);
@@ -36,6 +48,10 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [err, setErr] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [slotSource, setSlotSource] = useState<SlotSource>('loading');
+  const [slotMap, setSlotMap] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -47,6 +63,33 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
       document.body.style.overflow = prev;
     };
   }, [onClose]);
+
+  // One fetch for the whole 60-day booking window on open.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const today = new Date();
+        const from = isoOf(today);
+        const to = isoOf(
+          new Date(today.getFullYear(), today.getMonth(), today.getDate() + SCHEDULING.horizonDays)
+        );
+        const res = await fetch(`/api/slots?from=${from}&to=${to}`);
+        if (!res.ok) throw new Error(`slots ${res.status}`);
+        const data = (await res.json()) as { slots?: { date: string; times: string[] }[] };
+        if (cancelled) return;
+        const map: Record<string, string[]> = {};
+        for (const s of data.slots ?? []) map[s.date] = s.times;
+        setSlotMap(map);
+        setSlotSource('api');
+      } catch {
+        if (!cancelled) setSlotSource('demo');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const now = new Date();
   const monthBase = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
@@ -68,11 +111,20 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
   for (let d = 1; d <= daysInMonth; d++) {
     const cur = new Date(monthBase.getFullYear(), monthBase.getMonth(), d);
     const iso = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const dayAllowed = (SCHEDULING.days as readonly number[]).includes(cur.getDay());
-    const disabled =
-      cur < leadDate || cur > horizonDate || !dayAllowed || SCHEDULING.blocked.includes(iso);
+    let disabled: boolean;
+    if (slotSource === 'loading') {
+      disabled = true;
+    } else if (slotSource === 'api') {
+      disabled = !(slotMap[iso]?.length) || cur < leadDate || cur > horizonDate;
+    } else {
+      const dayAllowed = (SCHEDULING.days as readonly number[]).includes(cur.getDay());
+      disabled =
+        cur < leadDate || cur > horizonDate || !dayAllowed || SCHEDULING.blocked.includes(iso);
+    }
     cells.push({ blank: false, day: d, iso, disabled });
   }
+
+  const times = slotSource === 'api' ? (date ? (slotMap[date] ?? []) : []) : generateSlots();
 
   const dateLabel = date
     ? new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
@@ -82,12 +134,31 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
       })
     : '';
 
-  const confirm = () => {
+  const confirm = async () => {
     if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
       setErr(t.bk_err);
       return;
     }
-    setStep('done');
+    if (slotSource !== 'api') {
+      // Demo — nothing to persist; still show the done state.
+      setStep('done');
+      return;
+    }
+    setSubmitting(true);
+    setErr('');
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), date, time, locale: lang }),
+      });
+      if (!res.ok) throw new Error(`bookings ${res.status}`);
+      setStep('done');
+    } catch {
+      setErr(t.bk_api_err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const backBtn = (to: Step) => (
@@ -258,6 +329,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                       disabled={c.disabled}
                       onClick={() => {
                         setDate(c.iso);
+                        setTime(null);
                         setStep('time');
                       }}
                       className="border-0 font-medium"
@@ -276,6 +348,12 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                   )
                 )}
               </div>
+
+              {slotSource === 'loading' && (
+                <p className="m-0 text-placeholder" style={{ marginTop: 14, fontSize: 13 }}>
+                  {t.bk_loading}
+                </p>
+              )}
             </>
           )}
 
@@ -289,8 +367,13 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                 {dateLabel}
               </p>
 
+              {times.length === 0 && (
+                <p className="m-0 text-placeholder" style={{ fontSize: 14 }}>
+                  {t.bk_no_times}
+                </p>
+              )}
               <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                {generateSlots().map((slot) => (
+                {times.map((slot) => (
                   <button
                     key={slot}
                     onClick={() => {
@@ -374,8 +457,14 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
 
                 <button
                   onClick={confirm}
+                  disabled={submitting}
                   className="cursor-pointer self-start border-0 bg-orange text-ink font-semibold transition-colors hover:bg-orange-hover"
-                  style={{ fontSize: 15, padding: '13px 24px', borderRadius: 10 }}
+                  style={{
+                    fontSize: 15,
+                    padding: '13px 24px',
+                    borderRadius: 10,
+                    opacity: submitting ? 0.6 : 1,
+                  }}
                 >
                   {t.bk_confirm}
                 </button>
@@ -401,12 +490,20 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                 className="m-0 text-muted"
                 style={{ fontSize: 15, lineHeight: 1.6, maxWidth: 340 }}
               >
-                Your {SCHEDULING.duration}-minute consultation is scheduled for{' '}
+                {t.bk_done_a.replace('{min}', String(SCHEDULING.duration))}{' '}
                 <strong className="text-ink">
-                  {dateLabel} at {time}
+                  {dateLabel} {t.bk_at} {time}
                 </strong>
-                . A confirmation has been sent to {email}.
+                . {t.bk_done_b} {email}.
               </p>
+              {slotSource !== 'api' && (
+                <p
+                  className="m-0 font-medium"
+                  style={{ fontSize: 13, lineHeight: 1.5, maxWidth: 340, color: '#B7791F' }}
+                >
+                  {t.bk_demo_note}
+                </p>
+              )}
               <button
                 onClick={onClose}
                 className="cursor-pointer border-0 bg-ink text-white font-semibold"

@@ -60,7 +60,10 @@ export default function Header({ showAnnouncement = true }: { showAnnouncement?:
 
           <nav className="hidden nav:flex items-center" style={{ gap: 38 }} aria-label="Main">
             {NAV.map((item) => {
-              const active = pathname === item.to;
+              // Detail pages keep their section highlighted (design: ProjectDetail
+              // shows "Projects" active, ServiceDetail shows "Services" active).
+              const active =
+                pathname === item.to || (item.to !== '/' && pathname.startsWith(`${item.to}/`));
               return (
                 <Link
                   key={item.to}

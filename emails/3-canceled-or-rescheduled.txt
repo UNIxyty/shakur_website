@@ -1,0 +1,60 @@
+=================================================================
+ONE template, TWO variants. Send VARIANT A (canceled) or
+VARIANT B (rescheduled) depending on meetings.status.
+=================================================================
+
+
+===================== VARIANT A — CANCELED =====================
+Subject: Your meeting on {{meeting_date}} has been canceled
+
+SHAKUR
+
+YOUR MEETING HAS BEEN CANCELED
+
+Hi {{attendee_name}},
+
+Your meeting with {{host_name}} at {{company_name}} has been canceled.
+No further action is needed.
+
+  Canceled meeting: {{meeting_date}} · {{meeting_time}} ({{timezone}})
+
+Note from {{host_name}}:
+  {{cancellation_note}}
+
+Book a new time: {{booking_link}}
+
+Questions? Contact us at {{support_email}}.
+
+--
+{{company_name}} · Rīga, Latvia
+You received this because a meeting with us was canceled.
+Book again: {{booking_link}}
+
+
+================== VARIANT B — RESCHEDULED =====================
+Subject: Your meeting has been moved to {{new_meeting_date}}
+
+SHAKUR
+
+YOUR MEETING HAS BEEN MOVED
+
+Hi {{attendee_name}},
+
+Your meeting with {{host_name}} has a new time. Here's what changed:
+
+  Previous time: {{meeting_date}} · {{meeting_time}} ({{timezone}})   [no longer valid]
+
+  NEW TIME:
+    {{new_meeting_date}}
+    {{new_meeting_time}} ({{timezone}}) · {{duration}}
+    {{location_or_link}}
+
+View / manage booking: {{reschedule_link}}
+Cancel:                {{cancel_link}}
+
+Can't make the new time? Use the links above, or email {{support_email}}.
+
+--
+{{company_name}} · Rīga, Latvia
+You received this because your meeting with us was rescheduled.
+Manage booking: {{reschedule_link}}
