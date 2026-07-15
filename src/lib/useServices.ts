@@ -28,13 +28,16 @@ export function useServices() {
 
       if (error) {
         console.error('[shakur] services query failed, using static content:', error.message);
-      } else if (data?.length) {
-        // Guard against a half-migrated database (see useProjects).
-        const v2 = data.every(
+      } else {
+        // Guard against a half-migrated database (see useProjects). An EMPTY
+        // result is still live data — the home page shows its designed
+        // "No services yet" state instead of the static seed cards.
+        const rows = data ?? [];
+        const v2 = rows.every(
           (r) => r && typeof r.i18n === 'object' && r.i18n !== null && Array.isArray(r.media)
         );
         if (v2) {
-          setServices(data as ServiceRow[]);
+          setServices(rows as ServiceRow[]);
           setSource('supabase');
         } else {
           console.warn(

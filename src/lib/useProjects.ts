@@ -36,11 +36,14 @@ export function useProjects() {
 
       if (error) {
         console.error('[shakur] projects query failed, using static content:', error.message);
-      } else if (data?.length) {
+      } else {
         // A v1 database (before supabase/migrate-v2.sql) returns rows without
         // i18n/media — treat those as unusable rather than crashing the pages.
-        if (data.every(isV2Row)) {
-          setProjects(data as ProjectRow[]);
+        // An EMPTY result is still live data — the home page shows its designed
+        // "No projects yet" state instead of the static seed cards.
+        const rows = data ?? [];
+        if (rows.every(isV2Row)) {
+          setProjects(rows as ProjectRow[]);
           setSource('supabase');
         } else {
           console.warn(
