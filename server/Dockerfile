@@ -2,6 +2,11 @@
 #   docker build -f server/Dockerfile .
 FROM node:22-alpine
 
+# POST /api/media transcodes video uploads (h264+aac mp4 +faststart) and cuts
+# jpg posters; ffprobe ships with ffmpeg. Without it video uploads 500 with a
+# clear "video processing unavailable" error — images keep working.
+RUN apk add --no-cache ffmpeg
+
 WORKDIR /app
 
 COPY server/package.json server/package-lock.json* ./

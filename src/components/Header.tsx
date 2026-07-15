@@ -50,7 +50,7 @@ export default function Header({ showAnnouncement = true }: { showAnnouncement?:
           className="mx-auto flex items-center justify-between"
           style={{ maxWidth: 1320, padding: '22px 30px', gap: 24 }}
         >
-          <Link to="/" className="flex items-center" aria-label="SHAKUR — home">
+          <Link to="/" className="flex items-center" aria-label={t.a11y_home_link}>
             <img
               src="/images/shakur-logo.svg"
               alt="SHAKUR"
@@ -58,7 +58,7 @@ export default function Header({ showAnnouncement = true }: { showAnnouncement?:
             />
           </Link>
 
-          <nav className="hidden nav:flex items-center" style={{ gap: 38 }} aria-label="Main">
+          <nav className="hidden nav:flex items-center" style={{ gap: 38 }} aria-label={t.a11y_nav_main}>
             {NAV.map((item) => {
               // Detail pages keep their section highlighted (design: ProjectDetail
               // shows "Projects" active, ServiceDetail shows "Services" active).
@@ -125,7 +125,7 @@ export default function Header({ showAnnouncement = true }: { showAnnouncement?:
 
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={t.a11y_menu}
             aria-expanded={menuOpen}
             className="flex nav:hidden items-center justify-center cursor-pointer bg-transparent shrink-0 text-white"
             style={{
@@ -170,7 +170,7 @@ export default function Header({ showAnnouncement = true }: { showAnnouncement?:
                         key={l}
                         onClick={() => setLang(l)}
                         aria-pressed={l === lang}
-                        className="cursor-pointer font-semibold"
+                        className="drawer-lang cursor-pointer font-semibold"
                         style={{
                           padding: '8px 14px',
                           fontSize: 13,

@@ -97,7 +97,7 @@ export default function ConsultationModal({
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="relative flex overflow-hidden bg-white"
+        className="overlay-card relative flex overflow-hidden bg-white"
         style={{
           borderRadius: 18,
           width: '100%',
@@ -149,11 +149,14 @@ export default function ConsultationModal({
         </div>
 
         {/* Right panel — form / success */}
-        <div className="relative flex-1 overflow-y-auto" style={{ minWidth: 0, padding: '26px 30px' }}>
+        <div
+          className="overlay-panel relative flex-1 overflow-y-auto"
+          style={{ minWidth: 0, padding: '26px 30px' }}
+        >
           <button
             onClick={onClose}
-            aria-label="Close"
-            className="absolute flex cursor-pointer items-center justify-center border-0 text-muted transition-colors hover:bg-border-card"
+            aria-label={t.a11y_close}
+            className="overlay-close absolute flex cursor-pointer items-center justify-center border-0 text-muted transition-colors hover:bg-border-card"
             style={{
               top: 16,
               right: 16,
@@ -170,7 +173,7 @@ export default function ConsultationModal({
           {status !== 'success' ? (
             <>
               <h3
-                className="m-0 font-bold"
+                className="overlay-title m-0 font-bold"
                 style={{ margin: '0 6px 4px 0', fontSize: 20, letterSpacing: '-0.4px' }}
               >
                 {t.consult_form_title}
@@ -235,7 +238,7 @@ export default function ConsultationModal({
                       }}
                       disabled={submitting}
                       placeholder={t.consult_ph_name}
-                      className="outline-none"
+                      className="overlay-field outline-none"
                       style={inputStyle}
                     />
                   </label>
@@ -253,7 +256,7 @@ export default function ConsultationModal({
                       }}
                       disabled={submitting}
                       placeholder={t.ph_phone}
-                      className="outline-none"
+                      className="overlay-field outline-none"
                       style={inputStyle}
                     />
                   </label>
@@ -270,7 +273,7 @@ export default function ConsultationModal({
                     }}
                     disabled={submitting}
                     placeholder={t.ph_email}
-                    className="outline-none"
+                    className="overlay-field outline-none"
                     style={inputStyle}
                   />
                 </label>
@@ -300,7 +303,7 @@ export default function ConsultationModal({
                 <button
                   onClick={submit}
                   disabled={submitting}
-                  className="flex cursor-pointer items-center justify-center border-0 bg-orange text-ink font-semibold transition-colors hover:bg-orange-hover"
+                  className="overlay-submit flex cursor-pointer items-center justify-center border-0 bg-orange text-ink font-semibold transition-colors hover:bg-orange-hover"
                   style={{ marginTop: 2, gap: 9, fontSize: 15, padding: 14, borderRadius: 11 }}
                 >
                   {submitting && (

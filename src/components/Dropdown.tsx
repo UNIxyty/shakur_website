@@ -165,7 +165,8 @@ export function Dropdown({
         aria-label={ariaLabel}
         onClick={() => (open ? setOpen(false) : openMenu())}
         onKeyDown={onKeyDown}
-        className="flex w-full cursor-pointer items-center justify-between bg-white text-left font-medium outline-none"
+        // dd-trigger: ≥48px touch control on phones (index.css); admin `sm` opts out.
+        className={`dd-trigger ${sm ? 'dd-sm ' : ''}flex w-full cursor-pointer items-center justify-between bg-white text-left font-medium outline-none`}
         style={{
           gap: 10,
           border: `1px solid ${open ? '#FB8500' : '#E7E5E4'}`,

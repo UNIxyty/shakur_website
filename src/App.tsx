@@ -16,6 +16,7 @@ import AdminLogin from './admin/AdminLogin';
 import AdminPanel from './admin/AdminPanel';
 import RequireAuth from './admin/RequireAuth';
 import { useLang } from './lang';
+import { useSiteStatus } from './lib/useSiteStatus';
 import { pageTransition } from './motion';
 
 /** The design scrolls to the top on every route change. */
@@ -83,16 +84,20 @@ function PublicSite() {
 }
 
 /**
- * Site-mode gate (v3): when VITE_SITE_MODE=coming_soon every public route
- * renders the ComingSoon holding page (no Header/Footer) while /admin/login
- * and /admin/* keep working. A `shakur_site_mode=live` cookie overrides back
- * to the live site — the domain-migration escape hatch. Live when unset.
+ * Site-mode gate (v4, runtime): site_settings.status decides whether public
+ * routes render the site or the ComingSoon holding page — flipped from the
+ * admin panel, no rebuild. /admin/login and /admin/* always keep working.
+ * useSiteStatus handles the fallbacks: the `shakur_site_mode=live` cookie and
+ * a Supabase session both force 'live', and a pre-migration/unconfigured
+ * database falls back to the old VITE_SITE_MODE build flag.
+ *
+ * While the status is still resolving we render a blank shell (same trick as
+ * RequireAuth) so neither variant flashes before the answer arrives.
  */
-function comingSoonActive(): boolean {
-  return (
-    import.meta.env.VITE_SITE_MODE === 'coming_soon' &&
-    !document.cookie.includes('shakur_site_mode=live')
-  );
+function SiteGate() {
+  const status = useSiteStatus();
+  if (status === undefined) return <div className="min-h-screen bg-white" aria-busy="true" />;
+  return status === 'coming_soon' ? <ComingSoon /> : <PublicSite />;
 }
 
 export default function App() {
@@ -109,7 +114,7 @@ export default function App() {
             </RequireAuth>
           }
         />
-        <Route path="*" element={comingSoonActive() ? <ComingSoon /> : <PublicSite />} />
+        <Route path="*" element={<SiteGate />} />
       </Routes>
     </MotionConfig>
   );

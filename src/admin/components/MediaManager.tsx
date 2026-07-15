@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import * as tus from 'tus-js-client';
 import type { MediaItem } from '../../lib/db';
 import { supabase } from '../../lib/supabase';
 import { assetUrl } from '../../lib/assets';
@@ -9,16 +8,27 @@ import { IconClose, IconPlay, IconRetry, Spinner } from './ui';
 /**
  * Google-Drive-style media manager (drawer top section from
  * ShakurAdminPanel.dc.html): drop zone, upload rows with real progress via
- * tus resumable uploads to Supabase Storage, and the gallery grid with
- * set-cover / move / delete / replace-poster actions.
+ * XHR POSTs to /api/media (local-first pipeline: nginx-served /media/ files,
+ * background Supabase replication; videos are transcoded to faststart mp4
+ * with an auto-generated poster), and the gallery grid with set-cover /
+ * move / delete / replace-poster actions.
  */
 
-const BUCKET = 'project-images';
 const MAX_ITEMS = 20;
-/** Supabase requires exactly 6 MB chunks on the resumable endpoint. */
-const CHUNK_SIZE = 6 * 1024 * 1024;
+/** Video types POST /api/media accepts (images are image/*). */
+const VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
-const SUPA_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? '';
+/** 201 payload from POST /api/media (kind is absent on v3-era image shape). */
+type MediaUploadResponse = {
+  id: string;
+  kind?: 'image' | 'video';
+  path: string;
+  poster?: string;
+  supabaseUrl?: string;
+  posterSupabaseUrl?: string;
+  replication?: string;
+  size?: number;
+};
 
 type UploadRow = {
   id: string;
@@ -27,21 +37,14 @@ type UploadRow = {
   sizeMb: number;
   thumb: string; // object URL for images, '' for videos
   isVideo: boolean;
-  status: 'uploading' | 'error' | 'done';
+  /** `processing` = bytes fully sent, waiting on server ffmpeg/DB response. */
+  status: 'uploading' | 'processing' | 'error' | 'done';
   pct: number;
+  errMsg?: string;
   /** When set, the finished image becomes the poster of this media item. */
   posterFor: string | null;
-  tusUpload?: tus.Upload;
+  xhr?: XMLHttpRequest;
 };
-
-function publicUrl(objectName: string): string {
-  return `${SUPA_URL}/storage/v1/object/public/${BUCKET}/${objectName}`;
-}
-
-function objectNameFor(recordType: string, file: File): string {
-  const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, '-').slice(-80);
-  return `${recordType}/${crypto.randomUUID()}-${safe}`;
-}
 
 export default function MediaManager({
   recordType,
@@ -71,7 +74,7 @@ export default function MediaManager({
     () => () => {
       // Abort in-flight uploads and release object URLs when the drawer closes.
       uploadsRef.current.forEach((r) => {
-        void r.tusUpload?.abort();
+        r.xhr?.abort();
         if (r.thumb.startsWith('blob:')) URL.revokeObjectURL(r.thumb);
       });
     },
@@ -81,7 +84,7 @@ export default function MediaManager({
   const patchUpload = (id: string, patch: Partial<UploadRow>) =>
     setUploads((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
-  const finishUpload = (id: string, url: string) => {
+  const finishUpload = (id: string, resp: MediaUploadResponse) => {
     patchUpload(id, { status: 'done', pct: 100 });
     // The design shows the green check for a beat, then moves it to the gallery.
     setTimeout(() => {
@@ -90,15 +93,17 @@ export default function MediaManager({
         const { media: m, cover: c, onChange: apply } = latest.current;
         if (row.posterFor) {
           apply(
-            m.map((it) => (it.id === row.posterFor ? { ...it, poster: url } : it)),
+            m.map((it) => (it.id === row.posterFor ? { ...it, poster: resp.path } : it)),
             c
           );
           toast('Poster frame updated');
         } else {
           const item: MediaItem = {
             id: crypto.randomUUID(),
-            type: row.isVideo ? 'video' : 'image',
-            src: url,
+            type: resp.kind === 'video' ? 'video' : 'image',
+            src: resp.path,
+            // Videos come back with a server-generated poster frame.
+            ...(resp.kind === 'video' && resp.poster ? { poster: resp.poster } : {}),
           };
           apply([...m, item], c || item.id);
         }
@@ -113,37 +118,40 @@ export default function MediaManager({
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) {
-      patchUpload(row.id, { status: 'error' });
+      patchUpload(row.id, { status: 'error', errMsg: 'Session expired — sign in again' });
       return;
     }
-    const objectName = objectNameFor(recordType, row.file);
-    const upload = new tus.Upload(row.file, {
-      endpoint: `${SUPA_URL}/storage/v1/upload/resumable`,
-      retryDelays: [0, 1000, 3000],
-      headers: { authorization: `Bearer ${token}`, 'x-upsert': 'true' },
-      uploadDataDuringCreation: true,
-      removeFingerprintOnSuccess: true,
-      chunkSize: CHUNK_SIZE,
-      metadata: {
-        bucketName: BUCKET,
-        objectName,
-        contentType: row.file.type,
-        cacheControl: '3600',
-      },
-      onError: () => patchUpload(row.id, { status: 'error' }),
-      onProgress: (sent, total) => {
-        const pct = total ? Math.min(100, (sent / total) * 100) : 0;
-        patchUpload(row.id, { pct });
-      },
-      onSuccess: () => finishUpload(row.id, publicUrl(objectName)),
-    });
-    patchUpload(row.id, { tusUpload: upload, status: 'uploading', pct: Math.max(row.pct, 1) });
-    upload.start();
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/media');
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.responseType = 'json';
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      patchUpload(row.id, { pct: Math.min(100, (e.loaded / e.total) * 100) });
+    };
+    // All bytes sent — the server is now transcoding (video) / storing.
+    xhr.upload.onload = () => patchUpload(row.id, { status: 'processing', pct: 100 });
+    xhr.onload = () => {
+      const body = xhr.response as MediaUploadResponse | { error?: string } | null;
+      if (xhr.status === 201 && body && 'path' in body && body.path) {
+        finishUpload(row.id, body);
+      } else {
+        const msg = body && 'error' in body && body.error ? body.error : `Upload failed (${xhr.status})`;
+        patchUpload(row.id, { status: 'error', errMsg: msg });
+      }
+    };
+    xhr.onerror = () =>
+      patchUpload(row.id, { status: 'error', errMsg: 'Upload failed — network error' });
+    // onabort: cancelUpload already removed the row; nothing to patch.
+    patchUpload(row.id, { xhr, status: 'uploading', pct: Math.max(row.pct, 1), errMsg: undefined });
+    const form = new FormData();
+    form.append('file', row.file);
+    xhr.send(form);
   };
 
   const addFiles = (files: FileList | File[], posterFor: string | null = null) => {
     const arr = [...files].filter(
-      (f) => f.type && (f.type.startsWith('image') || (!posterFor && f.type.startsWith('video')))
+      (f) => f.type && (f.type.startsWith('image') || (!posterFor && VIDEO_MIMES.includes(f.type)))
     );
     if (!arr.length) return;
     const room = MAX_ITEMS - media.length - uploads.length;
@@ -172,7 +180,7 @@ export default function MediaManager({
 
   const cancelUpload = (id: string) => {
     const row = uploadsRef.current.find((r) => r.id === id);
-    row?.tusUpload?.abort(true).catch(() => undefined);
+    row?.xhr?.abort();
     if (row?.thumb.startsWith('blob:')) URL.revokeObjectURL(row.thumb);
     setUploads((rows) => rows.filter((r) => r.id !== id));
   };
@@ -344,10 +352,18 @@ export default function MediaManager({
           {uploads.map((u) => {
             const pctR = Math.round(u.pct);
             const uploading = u.status === 'uploading';
+            const processing = u.status === 'processing';
             const err = u.status === 'error';
             const done = u.status === 'done';
-            const meta = uploading ? `${pctR}%` : err ? 'Failed' : `${u.sizeMb} MB`;
-            const metaColor = uploading ? '#FB8500' : err ? '#D64545' : done ? '#1F8A5B' : '#A8A29E';
+            const meta = uploading
+              ? `${pctR}%`
+              : processing
+                ? 'Processing…'
+                : err
+                  ? 'Failed'
+                  : `${u.sizeMb} MB`;
+            const metaColor =
+              uploading || processing ? '#FB8500' : err ? '#D64545' : done ? '#1F8A5B' : '#A8A29E';
             return (
               <div
                 key={u.id}
@@ -380,11 +396,11 @@ export default function MediaManager({
                         backgroundImage: `url(${JSON.stringify(u.thumb)})`,
                         backgroundSize: 'cover',
                         backgroundPosition: '50% 50%',
-                        opacity: uploading ? 0.45 : 1,
+                        opacity: uploading || processing ? 0.45 : 1,
                       }}
                     />
                   )}
-                  {uploading && (
+                  {(uploading || processing) && (
                     <span
                       style={{
                         position: 'absolute',
@@ -441,7 +457,7 @@ export default function MediaManager({
                       {meta}
                     </span>
                   </div>
-                  {uploading && (
+                  {(uploading || processing) && (
                     <div
                       style={{
                         marginTop: 7,
@@ -464,7 +480,7 @@ export default function MediaManager({
                   )}
                   {err && (
                     <span style={{ fontSize: 12, color: '#D64545' }}>
-                      Upload failed — network error
+                      {u.errMsg || 'Upload failed — network error'}
                     </span>
                   )}
                 </div>

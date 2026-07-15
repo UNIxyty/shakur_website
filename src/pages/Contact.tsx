@@ -18,8 +18,15 @@ const inputStyle: React.CSSProperties = {
 export default function Contact() {
   const { t } = useLang();
   const [purposeOpen, setPurposeOpen] = useState(false);
-  const [purpose, setPurpose] = useState('');
   const [booking, setBooking] = useState(false);
+
+  // Every field is controlled so typed data survives any re-render; the
+  // purpose dropdown only ever writes its own value (v4 contract §5).
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [message, setMessage] = useState('');
 
   const options = [t.purpose1, t.purpose2, t.purpose3];
   const bullets = [t.cb1, t.cb2, t.cb3, t.cb4];
@@ -46,7 +53,7 @@ export default function Contact() {
             <Reveal
               as="form"
               onSubmit={(e: React.FormEvent) => e.preventDefault()}
-              className="flex flex-col bg-surface-alt"
+              className="m-cardpad flex flex-col bg-surface-alt"
               style={{
                 flex: 1,
                 minWidth: 280,
@@ -58,14 +65,24 @@ export default function Contact() {
             >
               <label className="flex flex-col font-medium" style={{ gap: 8, fontSize: 14 }}>
                 {t.c_name}
-                <input placeholder={t.ph_name} className="outline-none" style={inputStyle} />
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t.ph_name}
+                  autoComplete="name"
+                  className="outline-none"
+                  style={inputStyle}
+                />
               </label>
 
               <label className="flex flex-col font-medium" style={{ gap: 8, fontSize: 14 }}>
                 {t.c_email}
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder={t.ph_cemail}
+                  autoComplete="email"
                   className="outline-none"
                   style={inputStyle}
                 />
@@ -75,7 +92,10 @@ export default function Contact() {
                 {t.c_phone}
                 <input
                   type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   placeholder={t.ph_cphone}
+                  autoComplete="tel"
                   className="outline-none"
                   style={inputStyle}
                 />
@@ -155,6 +175,8 @@ export default function Contact() {
                 {t.c_message}
                 <textarea
                   rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   placeholder={t.ph_cmessage}
                   className="outline-none"
                   style={{ ...inputStyle, resize: 'vertical', fontFamily: "'Inter', sans-serif" }}

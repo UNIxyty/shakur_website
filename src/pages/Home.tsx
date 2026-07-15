@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import { useLang } from '../lang';
-import { LOGOS_ROW1, LOGOS_ROW2, SPACE_LABELS, coverSrc } from '../data';
+import { SPACE_LABELS, coverSrc } from '../data';
 import { useProjects } from '../lib/useProjects';
 import { useServices } from '../lib/useServices';
 import { useHome } from '../lib/useHome';
@@ -17,28 +17,39 @@ import BookingModal from '../components/BookingModal';
 import ConsultationModal from '../components/ConsultationModal';
 import { tapPress } from '../motion';
 import { bgImage, assetUrl } from '../lib/assets';
+import { useSiteChrome } from '../lib/useSiteChrome';
+
+/** SHAKUR-Mobile: reveal-on-scroll is "retained but shortened for phones". */
+const IS_PHONE =
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(max-width: 620px)').matches;
 
 /**
  * v3 section reveal — the design's .shk-reveal: opacity 0.8s ease +
  * 30px rise 0.85s cubic-bezier(0.22,1,0.36,1). Every below-fold section
  * enters with this; prefers-reduced-motion is honoured by <MotionConfig>.
+ * On phones the rise distance/duration shrink per the mobile spec.
  */
 const sectionReveal: Variants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: IS_PHONE ? 18 : 30 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      opacity: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] },
-      y: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+      opacity: { duration: IS_PHONE ? 0.55 : 0.8, ease: [0.25, 0.1, 0.25, 1] },
+      y: { duration: IS_PHONE ? 0.6 : 0.85, ease: [0.22, 1, 0.36, 1] },
     },
   },
 };
 
+/* 46px-tall inputs (SHAKUR-Mobile hero note; matches the design's computed
+   13px padding + 18px line = 46px box). */
 const heroInputStyle: React.CSSProperties = {
   border: '1px solid #E7E5E4',
   borderRadius: 10,
-  padding: '13px 14px',
+  height: 46,
+  padding: '0 14px',
   fontSize: 15,
   background: '#FAFAF9',
 };
@@ -48,6 +59,7 @@ export default function Home() {
   const { projects } = useProjects();
   const { services } = useServices();
   const { content } = useHome();
+  const chrome = useSiteChrome();
 
   // Hero form is controlled so "Request a Consultation" can pre-fill the modal.
   const [heroEmail, setHeroEmail] = useState('');
@@ -157,7 +169,7 @@ export default function Home() {
                   type="button"
                   whileTap={tapPress}
                   onClick={() => setConsult(true)}
-                  className="cursor-pointer border-0 text-center bg-orange text-ink font-semibold transition-colors duration-200 hover:bg-orange-hover"
+                  className="m-cta cursor-pointer border-0 text-center bg-orange text-ink font-semibold transition-colors duration-200 hover:bg-orange-hover"
                   style={{ flex: 1, fontSize: 14, padding: '13px 10px', borderRadius: 10 }}
                 >
                   {t.nav_cta}
@@ -166,7 +178,7 @@ export default function Home() {
                   type="button"
                   whileTap={tapPress}
                   onClick={() => setBooking(true)}
-                  className="cursor-pointer border-0 text-center bg-yellow text-ink font-semibold transition-colors duration-200 hover:bg-yellow-hover"
+                  className="m-cta cursor-pointer border-0 text-center bg-yellow text-ink font-semibold transition-colors duration-200 hover:bg-yellow-hover"
                   style={{ flex: 1, fontSize: 14, padding: '13px 10px', borderRadius: 10 }}
                 >
                   {t.form_book}
@@ -177,12 +189,24 @@ export default function Home() {
         </section>
 
         {/* TRUST LOGOS — pinned at the bottom of the first viewport */}
-        <section className="shrink-0 bg-white" style={{ padding: '30px 0 24px' }} aria-label="Partners">
-          <div className="mx-auto" style={{ maxWidth: 1200, padding: '0 24px' }}>
+        <section className="shrink-0 bg-white" style={{ padding: '30px 0 24px' }} aria-label={t.a11y_partners}>
+          {/* .mq-wrap: side padding drops on phones so the marquee runs edge-to-edge. */}
+          <div className="mq-wrap mx-auto" style={{ maxWidth: 1200, padding: '0 24px' }}>
             <div style={{ marginBottom: 30 }}>
-              <Marquee logos={LOGOS_ROW1} direction="left" label={t.partner_row1} />
+              <Marquee
+                logos={chrome.logosRow1}
+                direction="left"
+                label={t.partner_row1}
+                durationS={chrome.speedS}
+              />
             </div>
-            <Marquee logos={LOGOS_ROW2} direction="right" label={t.partner_row2} />
+            {/* Row 2 keeps the design's 25s/30s pace ratio at any configured speed. */}
+            <Marquee
+              logos={chrome.logosRow2}
+              direction="right"
+              label={t.partner_row2}
+              durationS={(chrome.speedS * 25) / 30}
+            />
           </div>
         </section>
       </div>
@@ -200,7 +224,7 @@ export default function Home() {
             <div style={{ borderRadius: 18, overflow: 'hidden', aspectRatio: '4 / 3.4' }}>
               <img
                 src={assetUrl(content.partner.image)}
-                alt="Interior finishing"
+                alt={t.alt_interior}
                 className="block w-full h-full object-cover"
               />
             </div>
@@ -349,14 +373,15 @@ export default function Home() {
             {t.planning_title}
           </h2>
 
+          {/* .plan-grid/.plan-step: vertical timeline on phones (SHAKUR-Mobile). */}
           <div
-            className="relative grid"
+            className="plan-grid relative grid"
             style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(230px, 100%), 1fr))', gap: 32 }}
           >
             {planning.map((p) => (
-              <div key={p.n} className="flex flex-col items-start" style={{ gap: 16 }}>
+              <div key={p.n} className="plan-step flex flex-col items-start" style={{ gap: 16 }}>
                 <div
-                  className="flex items-center justify-center bg-orange text-ink font-bold"
+                  className="plan-num flex items-center justify-center bg-orange text-ink font-bold"
                   style={{ width: 34, height: 34, borderRadius: '50%', fontSize: 15 }}
                 >
                   {p.n}
@@ -498,7 +523,7 @@ export default function Home() {
             {reliable.map(({ Icon, t: title, d }) => (
               <div
                 key={title}
-                className="flex flex-col bg-surface"
+                className="m-cardpad flex flex-col bg-surface"
                 style={{ border: '1px solid #EAEAE8', borderRadius: 16, padding: 30, gap: 14 }}
               >
                 <Icon size={30} />

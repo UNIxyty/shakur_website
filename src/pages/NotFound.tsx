@@ -22,7 +22,7 @@ export default function NotFound() {
           className="relative shrink-0"
           style={{ width: 300, height: 250 }}
         >
-          <NotFoundArt />
+          <NotFoundArt label={t.a11y_blueprint} />
         </Reveal>
 
         <RevealGroup className="flex flex-col" style={{ maxWidth: 560, gap: 26 }} gap={0.1}>

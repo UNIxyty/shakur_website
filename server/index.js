@@ -40,7 +40,8 @@ app.post('/api/bookings/:token/reschedule', handleRescheduleBooking);
 
 app.post('/api/consultations', rateLimiter(10, HOUR), handleCreateConsultation);
 
-// Home-CMS image uploads (multipart; express.json ignores non-JSON bodies).
+// Media uploads — images + video (multipart; express.json ignores non-JSON
+// bodies, so no body-parser limit applies here — busboy streams to disk).
 app.post('/api/media', requireAdmin, handleMediaUpload);
 
 app.post('/api/admin/meetings/:id/cancel', requireAdmin, handleAdminCancel);
@@ -59,8 +60,13 @@ app.use((err, _req, res, _next) => {
 });
 
 const port = Number(process.env.PORT || 8787);
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`[shakur-api] listening on :${port}`);
   // emails/2-reminder goes out when a scheduled meeting is <= 24h away.
   startReminderLoop();
 });
+
+// POST /api/media accepts video uploads up to 512 MB; Node's default cap on
+// receiving a full request (requestTimeout, 5 min) is too tight for large
+// files on slow uplinks. Headers still time out normally (headersTimeout).
+server.requestTimeout = 60 * 60 * 1000;

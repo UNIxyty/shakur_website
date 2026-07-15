@@ -1,0 +1,1571 @@
+{
+  "nav": {
+    "nav_home": {
+      "en": "Home",
+      "lv": "Sākums",
+      "ru": "Главная"
+    },
+    "nav_projects": {
+      "en": "Projects",
+      "lv": "Projekti",
+      "ru": "Проекты"
+    },
+    "nav_services": {
+      "en": "Services",
+      "lv": "Pakalpojumi",
+      "ru": "Услуги"
+    },
+    "nav_contact": {
+      "en": "Contact",
+      "lv": "Kontakti",
+      "ru": "Контакты"
+    },
+    "nav_cta": {
+      "en": "Request a Consultation",
+      "lv": "Pieteikt konsultāciju",
+      "ru": "Заказать консультацию"
+    },
+    "a11y_home_link": {
+      "en": "SHAKUR — home",
+      "lv": "SHAKUR — sākums",
+      "ru": "SHAKUR — главная"
+    },
+    "a11y_nav_main": {
+      "en": "Main",
+      "lv": "Galvenā",
+      "ru": "Основная"
+    },
+    "a11y_menu": {
+      "en": "Menu",
+      "lv": "Izvēlne",
+      "ru": "Меню"
+    }
+  },
+  "announcement": {
+    "ann": {
+      "en": "Call us to get a free estimate:",
+      "lv": "Zvaniet, lai saņemtu bezmaksas tāmi:",
+      "ru": "Позвоните, чтобы получить бесплатную смету:"
+    }
+  },
+  "home": {
+    "hero": {
+      "hero_title": {
+        "en": "Interior Finish Experts",
+        "lv": "Iekšdarbu apdares eksperti",
+        "ru": "Эксперты по внутренней отделке"
+      },
+      "hero_sub": {
+        "en": "From drywall installation to tiling and painting — we deliver high-quality interior finishing with clear pricing, on-time completion, and a 5-year warranty.",
+        "lv": "No ģipškartona montāžas līdz flīzēšanai un krāsošanai — mēs nodrošinām augstas kvalitātes iekšdarbu apdari ar skaidrām cenām, savlaicīgu izpildi un 5 gadu garantiju.",
+        "ru": "От монтажа гипсокартона до укладки плитки и покраски — мы обеспечиваем качественную внутреннюю отделку с прозрачными ценами, соблюдением сроков и 5-летней гарантией."
+      },
+      "form_email": {
+        "en": "E-Mail",
+        "lv": "E-pasts",
+        "ru": "Эл. почта"
+      },
+      "form_phone": {
+        "en": "Phone Number",
+        "lv": "Tālruņa numurs",
+        "ru": "Номер телефона"
+      },
+      "ph_email": {
+        "en": "your@email.com",
+        "lv": "tavs@epasts.lv",
+        "ru": "ваш@email.com"
+      },
+      "ph_phone": {
+        "en": "+371 20 000 000",
+        "lv": "+371 20 000 000",
+        "ru": "+371 20 000 000"
+      },
+      "form_book": {
+        "en": "Book an Appointment",
+        "lv": "Rezervēt tikšanos",
+        "ru": "Записаться на встречу"
+      }
+    },
+    "partners": {
+      "partner_row1": {
+        "en": "Completed Their Projects At",
+        "lv": "Pabeidza savus projektus",
+        "ru": "Завершили свои проекты в"
+      },
+      "partner_row2": {
+        "en": "Projects Took Place At",
+        "lv": "Projekti norisinājās",
+        "ru": "Проекты проходили в"
+      },
+      "a11y_partners": {
+        "en": "Partners",
+        "lv": "Partneri",
+        "ru": "Партнёры"
+      }
+    },
+    "values": {
+      "value_title": {
+        "en": "Your Partner in Quality Interior Finishing",
+        "lv": "Jūsu partneris kvalitatīvā iekšdarbu apdarē",
+        "ru": "Ваш партнёр в качественной внутренней отделке"
+      },
+      "pi_t": {
+        "en": "Premium Interior Installation",
+        "lv": "Augstākā līmeņa iekšdarbu montāža",
+        "ru": "Премиальная внутренняя отделка"
+      },
+      "pi_d": {
+        "en": "Our skilled team delivers flawless drywall, tiling, and finishing work with lasting quality.",
+        "lv": "Mūsu prasmīgā komanda veic nevainojamu ģipškartona, flīzēšanas un apdares darbu ar noturīgu kvalitāti.",
+        "ru": "Наша команда выполняет безупречный монтаж гипсокартона, укладку плитки и отделку с долговечным качеством."
+      },
+      "bis_t": {
+        "en": "98% Journal Completion",
+        "lv": "98% žurnāla aizpildīšana",
+        "ru": "98% заполнение журнала"
+      },
+      "bis_d": {
+        "en": "We maintain a 98% project-journal completion rate — full documentation, permits, and compliance records.",
+        "lv": "Mēs uzturam 98% projektu žurnāla aizpildīšanas līmeni — pilna dokumentācija, atļaujas un atbilstības ieraksti.",
+        "ru": "Мы поддерживаем 98% заполнения журнала проекта — полная документация, разрешения и записи о соответствии."
+      },
+      "fast_t": {
+        "en": "Fast and Reliable Repairs",
+        "lv": "Ātri un uzticami remonti",
+        "ru": "Быстрый и надёжный ремонт"
+      },
+      "fast_d": {
+        "en": "From minor fixes to major work — we restore interiors quickly, cleanly, and precisely.",
+        "lv": "No maziem labojumiem līdz lieliem darbiem — mēs atjaunojam interjerus ātri, tīri un precīzi.",
+        "ru": "От мелкого ремонта до крупных работ — мы восстанавливаем интерьеры быстро, чисто и точно."
+      },
+      "stress_t": {
+        "en": "Stress-Free Interior Construction",
+        "lv": "Bezrūpīga iekšdarbu būvniecība",
+        "ru": "Отделка без забот"
+      },
+      "stress_d": {
+        "en": "From concept to delivery, we manage the whole process with precision and care.",
+        "lv": "No idejas līdz nodošanai mēs vadām visu procesu ar precizitāti un rūpību.",
+        "ru": "От идеи до сдачи мы ведём весь процесс с точностью и вниманием."
+      },
+      "concept_title": {
+        "en": "From Concept to Completion",
+        "lv": "No idejas līdz izpildei",
+        "ru": "От идеи до завершения"
+      },
+      "alt_interior": {
+        "en": "Interior finishing",
+        "lv": "Iekšdarbu apdare",
+        "ru": "Внутренняя отделка"
+      }
+    },
+    "process": {
+      "planning_title": {
+        "en": "From Planning to Perfection",
+        "lv": "No plānošanas līdz pilnībai",
+        "ru": "От планирования к совершенству"
+      },
+      "pl1_t": {
+        "en": "Book a Free Consultation",
+        "lv": "Pieteikt bezmaksas konsultāciju",
+        "ru": "Заказать бесплатную консультацию"
+      },
+      "pl1_d": {
+        "en": "Tell us about your project — we assess your goals remotely or on-site to prepare a tailored offer.",
+        "lv": "Pastāstiet par savu projektu — mēs izvērtējam mērķus attālināti vai objektā, lai sagatavotu piedāvājumu.",
+        "ru": "Расскажите о проекте — мы оценим цели удалённо или на объекте и подготовим индивидуальное предложение."
+      },
+      "pl2_t": {
+        "en": "Get a Clear and Tailored Offer",
+        "lv": "Saņemt skaidru piedāvājumu",
+        "ru": "Получить чёткое предложение"
+      },
+      "pl2_d": {
+        "en": "Based on the information provided, we prepare a transparent, detailed quote — no hidden fees.",
+        "lv": "Pamatojoties uz sniegto informāciju, mēs sagatavojam caurspīdīgu, detalizētu tāmi — bez slēptām izmaksām.",
+        "ru": "На основе предоставленной информации мы подготовим прозрачную и детальную смету — без скрытых платежей."
+      },
+      "pl3_t": {
+        "en": "Professional Work Execution",
+        "lv": "Profesionāla darbu izpilde",
+        "ru": "Профессиональное выполнение работ"
+      },
+      "pl3_d": {
+        "en": "Our skilled team gets to work using quality materials, with attention to detail and clean, timely delivery.",
+        "lv": "Mūsu komanda strādā ar kvalitatīviem materiāliem, ar uzmanību detaļām un tīru, savlaicīgu izpildi.",
+        "ru": "Наша команда работает с качественными материалами, уделяя внимание деталям и чистой, своевременной сдаче."
+      },
+      "pl4_t": {
+        "en": "Final Review & Guarantee",
+        "lv": "Gala pārbaude un garantija",
+        "ru": "Финальная проверка и гарантия"
+      },
+      "pl4_d": {
+        "en": "Once completed, we walk through the results with you and hand over the finished space with a full guarantee.",
+        "lv": "Pēc pabeigšanas mēs kopā ar jums pārbaudām rezultātu un nododam telpu ar pilnu garantiju.",
+        "ru": "После завершения мы вместе осматриваем результат и передаём готовое помещение с полной гарантией."
+      }
+    },
+    "projects": {
+      "spaces_title": {
+        "en": "See the Spaces We Build & Transform",
+        "lv": "Apskatiet telpas, ko būvējam un pārveidojam",
+        "ru": "Посмотрите пространства, которые мы строим и преображаем"
+      },
+      "view_all": {
+        "en": "View All Projects",
+        "lv": "Skatīt visus projektus",
+        "ru": "Все проекты"
+      },
+      "empty_proj_t": {
+        "en": "No projects yet",
+        "lv": "Vēl nav projektu",
+        "ru": "Пока нет проектов"
+      },
+      "empty_proj_d": {
+        "en": "Completed and in-progress projects will show up here once published.",
+        "lv": "Pabeigtie un notiekošie projekti parādīsies šeit pēc publicēšanas.",
+        "ru": "Завершённые и текущие проекты появятся здесь после публикации."
+      }
+    },
+    "services": {
+      "reliable_title": {
+        "en": "Your Reliable Drywall and Finishing Partner",
+        "lv": "Jūsu uzticamais ģipškartona un apdares partneris",
+        "ru": "Ваш надёжный партнёр по гипсокартону и отделке"
+      },
+      "rl1_t": {
+        "en": "Drywall Partition Installation",
+        "lv": "Ģipškartona starpsienu montāža",
+        "ru": "Монтаж гипсокартонных перегородок"
+      },
+      "rl1_d": {
+        "en": "Accurate and efficient installation of drywall partitions, ensuring strong, high-quality results at every stage of construction.",
+        "lv": "Precīza un efektīva ģipškartona starpsienu montāža, nodrošinot izturīgu, augstas kvalitātes rezultātu katrā būvniecības posmā.",
+        "ru": "Точный и эффективный монтаж гипсокартонных перегородок, обеспечивающий прочный и качественный результат на каждом этапе."
+      },
+      "rl2_t": {
+        "en": "Finishing Works",
+        "lv": "Apdares darbi",
+        "ru": "Отделочные работы"
+      },
+      "rl2_d": {
+        "en": "We provide a wide range of finishing services with great attention to detail, making every space look flawless.",
+        "lv": "Piedāvājam plašu apdares pakalpojumu klāstu ar lielu uzmanību detaļām, lai katra telpa izskatītos nevainojami.",
+        "ru": "Мы предлагаем широкий спектр отделочных услуг с вниманием к деталям, чтобы каждое пространство выглядело безупречно."
+      },
+      "rl3_t": {
+        "en": "Building Works Management and Supervision",
+        "lv": "Būvdarbu vadība un uzraudzība",
+        "ru": "Управление и надзор за строительством"
+      },
+      "rl3_d": {
+        "en": "Professional management and supervision of construction works to ensure compliance with regulations and quality standards.",
+        "lv": "Profesionāla būvdarbu vadība un uzraudzība, lai nodrošinātu atbilstību normatīviem un kvalitātes standartiem.",
+        "ru": "Профессиональное управление и надзор за строительными работами для соответствия нормам и стандартам качества."
+      },
+      "rl4_t": {
+        "en": "Other Construction Completion Operations",
+        "lv": "Citas būvniecības pabeigšanas operācijas",
+        "ru": "Прочие работы по завершению строительства"
+      },
+      "rl4_d": {
+        "en": "Completing all necessary finishing tasks to deliver your project on time and up to the highest standards.",
+        "lv": "Visu nepieciešamo apdares darbu pabeigšana, lai nodotu projektu laikā un augstākajā kvalitātē.",
+        "ru": "Выполнение всех необходимых отделочных работ для сдачи проекта в срок и на высшем уровне."
+      },
+      "get_service": {
+        "en": "Get Service",
+        "lv": "Saņemt pakalpojumu",
+        "ru": "Заказать услугу"
+      },
+      "empty_svc_t": {
+        "en": "No services yet",
+        "lv": "Vēl nav pakalpojumu",
+        "ru": "Пока нет услуг"
+      },
+      "empty_svc_d": {
+        "en": "Published services will appear here. Add your first service from the admin panel.",
+        "lv": "Publicētie pakalpojumi parādīsies šeit. Pievienojiet pirmo pakalpojumu administratora panelī.",
+        "ru": "Опубликованные услуги появятся здесь. Добавьте первую услугу в панели администратора."
+      }
+    }
+  },
+  "services_page": {
+    "services_page_title": {
+      "en": "Service Areas",
+      "lv": "Pakalpojumu jomas",
+      "ru": "Направления услуг"
+    },
+    "sp_eyebrow": {
+      "en": "What we do",
+      "lv": "Ko mēs darām",
+      "ru": "Что мы делаем"
+    },
+    "sp_title": {
+      "en": "Our services",
+      "lv": "Mūsu pakalpojumi",
+      "ru": "Наши услуги"
+    },
+    "sp_intro": {
+      "en": "Full-scope construction and finishing across the Baltics and beyond — one accountable team, from first survey to final handover.",
+      "lv": "Pilna apjoma būvniecība un apdare Baltijā un ārpus tās — viena atbildīga komanda no pirmās apsekošanas līdz gala nodošanai.",
+      "ru": "Полный цикл строительства и отделки в Балтии и за её пределами — одна ответственная команда от первого осмотра до финальной сдачи."
+    },
+    "sp_filter_all": {
+      "en": "All",
+      "lv": "Visi",
+      "ru": "Все"
+    },
+    "cat_construction": {
+      "en": "Construction",
+      "lv": "Būvniecība",
+      "ru": "Строительство"
+    },
+    "cat_finishing": {
+      "en": "Finishing",
+      "lv": "Apdare",
+      "ru": "Отделка"
+    },
+    "cat_support": {
+      "en": "Support",
+      "lv": "Atbalsts",
+      "ru": "Поддержка"
+    },
+    "sp_empty": {
+      "en": "No services in this category yet.",
+      "lv": "Šajā kategorijā pagaidām nav pakalpojumu.",
+      "ru": "В этой категории пока нет услуг."
+    },
+    "sp_view": {
+      "en": "View service",
+      "lv": "Skatīt pakalpojumu",
+      "ru": "Смотреть услугу"
+    },
+    "sp_cta_title": {
+      "en": "Not sure which service you need?",
+      "lv": "Neesat pārliecināts, kurš pakalpojums jums nepieciešams?",
+      "ru": "Не уверены, какая услуга вам нужна?"
+    },
+    "sp_cta_sub": {
+      "en": "Tell us about your project and we'll point you to the right team — and book a free on-site consultation.",
+      "lv": "Pastāstiet par savu projektu, un mēs norādīsim īsto komandu — un pieteiksim bezmaksas konsultāciju objektā.",
+      "ru": "Расскажите о своём проекте — мы подскажем нужную команду и запишем вас на бесплатную консультацию на объекте."
+    },
+    "sp_cta_btn": {
+      "en": "Book a consultation",
+      "lv": "Pieteikt konsultāciju",
+      "ru": "Записаться на консультацию"
+    }
+  },
+  "projects_page": {
+    "projects_page_title": {
+      "en": "Project Views",
+      "lv": "Projektu skati",
+      "ru": "Обзор проектов"
+    },
+    "load_more": {
+      "en": "Load More",
+      "lv": "Ielādēt vairāk",
+      "ru": "Загрузить ещё"
+    }
+  },
+  "detail": {
+    "shared": {
+      "sd_gallery": {
+        "en": "Gallery",
+        "lv": "Galerija",
+        "ru": "Галерея"
+      },
+      "sd_video": {
+        "en": "Video",
+        "lv": "Video",
+        "ru": "Видео"
+      },
+      "detail_cta_sub": {
+        "en": "Book a free consultation and we'll walk your site, scope the work, and give you a clear, fixed quote.",
+        "lv": "Piesakiet bezmaksas konsultāciju — mēs apsekosim objektu, noteiksim darbu apjomu un sniegsim skaidru, fiksētu tāmi.",
+        "ru": "Запишитесь на бесплатную консультацию — мы осмотрим объект, определим объём работ и дадим чёткую фиксированную смету."
+      }
+    },
+    "service": {
+      "sd_all_services": {
+        "en": "All services",
+        "lv": "Visi pakalpojumi",
+        "ru": "Все услуги"
+      },
+      "sd_cap_eyebrow": {
+        "en": "What we can do",
+        "lv": "Ko mēs varam paveikt",
+        "ru": "Что мы умеем"
+      },
+      "sd_about": {
+        "en": "About this service",
+        "lv": "Par šo pakalpojumu",
+        "ru": "Об этой услуге"
+      },
+      "sd_get_started": {
+        "en": "Get started",
+        "lv": "Sāciet šeit",
+        "ru": "С чего начать"
+      },
+      "sd_free_consult": {
+        "en": "Free on-site consultation",
+        "lv": "Bezmaksas konsultācija objektā",
+        "ru": "Бесплатная консультация на объекте"
+      },
+      "sd_book": {
+        "en": "Book this service",
+        "lv": "Pieteikt šo pakalpojumu",
+        "ru": "Заказать эту услугу"
+      },
+      "sd_cta_title": {
+        "en": "Ready to start your {title} project?",
+        "lv": "Vai esat gatavs sākt savu projektu — {title}?",
+        "ru": "Готовы начать проект «{title}»?"
+      },
+      "why_us": {
+        "en": "Why Choose Us?",
+        "lv": "Kāpēc izvēlēties mūs?",
+        "ru": "Почему выбирают нас?"
+      },
+      "how_works": {
+        "en": "How It Works",
+        "lv": "Kā tas notiek",
+        "ru": "Как это работает"
+      },
+      "why1": {
+        "en": "Skilled, certified specialists",
+        "lv": "Prasmīgi, sertificēti speciālisti",
+        "ru": "Квалифицированные, сертифицированные специалисты"
+      },
+      "why2": {
+        "en": "High-grade, durable materials",
+        "lv": "Augstas kvalitātes, izturīgi materiāli",
+        "ru": "Высококачественные, прочные материалы"
+      },
+      "why3": {
+        "en": "Precise execution and clean finishing",
+        "lv": "Precīza izpilde un tīra apdare",
+        "ru": "Точное выполнение и чистая отделка"
+      },
+      "why4": {
+        "en": "Tailored solutions for every project",
+        "lv": "Pielāgoti risinājumi katram projektam",
+        "ru": "Индивидуальные решения для каждого проекта"
+      },
+      "how1_t": {
+        "en": "Contract Setup",
+        "lv": "Līguma sagatavošana",
+        "ru": "Оформление договора"
+      },
+      "how1_d": {
+        "en": "Define requirements and design",
+        "lv": "Prasību un dizaina noteikšana",
+        "ru": "Определение требований и дизайна"
+      },
+      "how2_t": {
+        "en": "Material Selection",
+        "lv": "Materiālu izvēle",
+        "ru": "Выбор материалов"
+      },
+      "how2_d": {
+        "en": "Choose materials and finishes",
+        "lv": "Materiālu un apdares izvēle",
+        "ru": "Выбор материалов и отделки"
+      },
+      "how3_t": {
+        "en": "Execution",
+        "lv": "Izpilde",
+        "ru": "Выполнение"
+      },
+      "how3_d": {
+        "en": "Installation, assembly, and detailing",
+        "lv": "Montāža, salikšana un detalizēšana",
+        "ru": "Монтаж, сборка и детализация"
+      },
+      "how4_t": {
+        "en": "Finishing",
+        "lv": "Apdare",
+        "ru": "Отделка"
+      },
+      "how4_d": {
+        "en": "Final touches, sealing, and protection",
+        "lv": "Gala apdare, hermetizēšana un aizsardzība",
+        "ru": "Финальные штрихи, герметизация и защита"
+      }
+    },
+    "project": {
+      "pd_all_projects": {
+        "en": "All projects",
+        "lv": "Visi projekti",
+        "ru": "Все проекты"
+      },
+      "pd_scope_eyebrow": {
+        "en": "Scope of work",
+        "lv": "Darbu apjoms",
+        "ru": "Объём работ"
+      },
+      "pd_about": {
+        "en": "About this project",
+        "lv": "Par šo projektu",
+        "ru": "Об этом проекте"
+      },
+      "pd_details": {
+        "en": "Project details",
+        "lv": "Projekta dati",
+        "ru": "Детали проекта"
+      },
+      "pd_start_similar": {
+        "en": "Start a similar project",
+        "lv": "Sākt līdzīgu projektu",
+        "ru": "Начать похожий проект"
+      },
+      "pd_cta_title": {
+        "en": "Have a project like this in mind?",
+        "lv": "Ir padomā līdzīgs projekts?",
+        "ru": "Задумали похожий проект?"
+      },
+      "pd_f_location": {
+        "en": "Location",
+        "lv": "Atrašanās vieta",
+        "ru": "Расположение"
+      },
+      "pd_f_completed": {
+        "en": "Completed",
+        "lv": "Pabeigts",
+        "ru": "Завершён"
+      },
+      "pd_f_site": {
+        "en": "Site",
+        "lv": "Objekts",
+        "ru": "Объект"
+      },
+      "facts_title": {
+        "en": "Facts",
+        "lv": "Fakti",
+        "ru": "Факты"
+      },
+      "f_service": {
+        "en": "Service",
+        "lv": "Pakalpojums",
+        "ru": "Услуга"
+      },
+      "f_start": {
+        "en": "Start date",
+        "lv": "Sākuma datums",
+        "ru": "Дата начала"
+      },
+      "f_end": {
+        "en": "End date",
+        "lv": "Beigu datums",
+        "ru": "Дата окончания"
+      },
+      "f_country": {
+        "en": "Country",
+        "lv": "Valsts",
+        "ru": "Страна"
+      },
+      "f_city": {
+        "en": "City",
+        "lv": "Pilsēta",
+        "ru": "Город"
+      },
+      "f_client": {
+        "en": "Client",
+        "lv": "Klients",
+        "ru": "Клиент"
+      },
+      "f_status": {
+        "en": "Status",
+        "lv": "Statuss",
+        "ru": "Статус"
+      },
+      "official_site": {
+        "en": "Official project site",
+        "lv": "Oficiālā projekta lapa",
+        "ru": "Официальный сайт проекта"
+      },
+      "status_completed": {
+        "en": "Completed",
+        "lv": "Pabeigts",
+        "ru": "Завершён"
+      },
+      "status_in_progress": {
+        "en": "In Progress",
+        "lv": "Procesā",
+        "ru": "В работе"
+      },
+      "status_paused": {
+        "en": "Paused",
+        "lv": "Apturēts",
+        "ru": "Приостановлен"
+      }
+    }
+  },
+  "contact": {
+    "contact_page_title": {
+      "en": "Contact",
+      "lv": "Kontakti",
+      "ru": "Контакты"
+    },
+    "c_name": {
+      "en": "Full Name",
+      "lv": "Pilns vārds",
+      "ru": "Полное имя"
+    },
+    "c_email": {
+      "en": "Email Address",
+      "lv": "E-pasta adrese",
+      "ru": "Адрес эл. почты"
+    },
+    "c_phone": {
+      "en": "Phone Number",
+      "lv": "Tālruņa numurs",
+      "ru": "Номер телефона"
+    },
+    "c_purpose": {
+      "en": "Purpose of contacting us",
+      "lv": "Saziņas mērķis",
+      "ru": "Цель обращения"
+    },
+    "c_message": {
+      "en": "Messages",
+      "lv": "Ziņojums",
+      "ru": "Сообщение"
+    },
+    "ph_name": {
+      "en": "Enter your full name",
+      "lv": "Ievadiet savu pilnu vārdu",
+      "ru": "Введите ваше полное имя"
+    },
+    "ph_cemail": {
+      "en": "Enter your mail",
+      "lv": "Ievadiet e-pastu",
+      "ru": "Введите вашу почту"
+    },
+    "ph_cphone": {
+      "en": "e.g. +210920932",
+      "lv": "piem., +210920932",
+      "ru": "напр., +210920932"
+    },
+    "ph_cmessage": {
+      "en": "Type your mail",
+      "lv": "Ierakstiet ziņojumu",
+      "ru": "Введите сообщение"
+    },
+    "ph_purpose": {
+      "en": "Select your purpose",
+      "lv": "Izvēlieties mērķi",
+      "ru": "Выберите цель"
+    },
+    "purpose1": {
+      "en": "Request a quote",
+      "lv": "Pieprasīt tāmi",
+      "ru": "Запросить смету"
+    },
+    "purpose2": {
+      "en": "Book a consultation",
+      "lv": "Pieteikt konsultāciju",
+      "ru": "Записаться на консультацию"
+    },
+    "purpose3": {
+      "en": "General enquiry",
+      "lv": "Vispārīgs jautājums",
+      "ru": "Общий вопрос"
+    },
+    "sub_email": {
+      "en": "Email or Zoom",
+      "lv": "E-pasts vai Zoom",
+      "ru": "Эл. почта или Zoom"
+    },
+    "sub_book": {
+      "en": "In Person Meeting at Our Office",
+      "lv": "Klātienes tikšanās mūsu birojā",
+      "ru": "Личная встреча в нашем офисе"
+    },
+    "c_info_title": {
+      "en": "Professional Building Solutions for a Perfect Renovation",
+      "lv": "Profesionāli būvniecības risinājumi ideālam remontam",
+      "ru": "Профессиональные строительные решения для идеального ремонта"
+    },
+    "c_info_body": {
+      "en": "Protect and transform your home with high-quality finishing and drywall services. From small repairs to complete renovations — we handle it all professionally. Get your free consultation today!",
+      "lv": "Aizsargājiet un pārveidojiet savu māju ar augstas kvalitātes apdari un ģipškartona pakalpojumiem. No maziem remontiem līdz pilnīgai renovācijai — mēs to visu paveicam profesionāli. Saņemiet bezmaksas konsultāciju jau šodien!",
+      "ru": "Защитите и преобразите ваш дом с помощью качественной отделки и услуг по гипсокартону. От мелкого ремонта до полной реновации — мы делаем всё профессионально. Получите бесплатную консультацию сегодня!"
+    },
+    "cb1": {
+      "en": "More than 10 large projects in Riga",
+      "lv": "Vairāk nekā 10 lieli projekti Rīgā",
+      "ru": "Более 10 крупных проектов в Риге"
+    },
+    "cb2": {
+      "en": "More than 250 apartments in new multi-apartment building projects",
+      "lv": "Vairāk nekā 250 dzīvokļi jaunos daudzdzīvokļu projektos",
+      "ru": "Более 250 квартир в новых многоквартирных проектах"
+    },
+    "cb3": {
+      "en": "Payment after contract",
+      "lv": "Apmaksa pēc līguma",
+      "ru": "Оплата после договора"
+    },
+    "cb4": {
+      "en": "Competitive Pricing & Free Estimates",
+      "lv": "Konkurētspējīgas cenas un bezmaksas tāmes",
+      "ru": "Конкурентные цены и бесплатные сметы"
+    },
+    "find_us": {
+      "en": "Find us in Latvia",
+      "lv": "Atrodiet mūs Latvijā",
+      "ru": "Найдите нас в Латвии"
+    },
+    "reach_us": {
+      "en": "Reach out to us at",
+      "lv": "Sazinieties ar mums",
+      "ru": "Свяжитесь с нами"
+    }
+  },
+  "booking": {
+    "mb_eyebrow": {
+      "en": "Manage booking",
+      "lv": "Rezervācijas pārvaldība",
+      "ru": "Управление записью"
+    },
+    "mb_title": {
+      "en": "Your consultation",
+      "lv": "Jūsu konsultācija",
+      "ru": "Ваша консультация"
+    },
+    "mb_f_name": {
+      "en": "Name",
+      "lv": "Vārds",
+      "ru": "Имя"
+    },
+    "mb_f_date": {
+      "en": "Date",
+      "lv": "Datums",
+      "ru": "Дата"
+    },
+    "mb_f_time": {
+      "en": "Time",
+      "lv": "Laiks",
+      "ru": "Время"
+    },
+    "mb_f_duration": {
+      "en": "Duration",
+      "lv": "Ilgums",
+      "ru": "Длительность"
+    },
+    "mb_f_status": {
+      "en": "Status",
+      "lv": "Statuss",
+      "ru": "Статус"
+    },
+    "mb_minutes": {
+      "en": "minutes",
+      "lv": "minūtes",
+      "ru": "минут"
+    },
+    "mb_status_scheduled": {
+      "en": "Scheduled",
+      "lv": "Ieplānota",
+      "ru": "Запланирована"
+    },
+    "mb_status_canceled": {
+      "en": "Canceled",
+      "lv": "Atcelta",
+      "ru": "Отменена"
+    },
+    "mb_status_completed": {
+      "en": "Completed",
+      "lv": "Notikusi",
+      "ru": "Состоялась"
+    },
+    "mb_reschedule": {
+      "en": "Reschedule",
+      "lv": "Pārcelt",
+      "ru": "Перенести"
+    },
+    "mb_cancel": {
+      "en": "Cancel booking",
+      "lv": "Atcelt rezervāciju",
+      "ru": "Отменить запись"
+    },
+    "mb_new_date": {
+      "en": "New date",
+      "lv": "Jauns datums",
+      "ru": "Новая дата"
+    },
+    "mb_new_time": {
+      "en": "New time",
+      "lv": "Jauns laiks",
+      "ru": "Новое время"
+    },
+    "mb_date_ph": {
+      "en": "Select date",
+      "lv": "Izvēlieties datumu",
+      "ru": "Выберите дату"
+    },
+    "mb_time_ph": {
+      "en": "Select time",
+      "lv": "Izvēlieties laiku",
+      "ru": "Выберите время"
+    },
+    "mb_confirm_res": {
+      "en": "Confirm new time",
+      "lv": "Apstiprināt jauno laiku",
+      "ru": "Подтвердить новое время"
+    },
+    "mb_cancel_q": {
+      "en": "Cancel this booking?",
+      "lv": "Atcelt šo rezervāciju?",
+      "ru": "Отменить эту запись?"
+    },
+    "mb_cancel_note": {
+      "en": "Your time slot will be released. You can always book a new consultation later.",
+      "lv": "Jūsu laiks tiks atbrīvots. Jaunu konsultāciju vienmēr varēsiet pieteikt vēlāk.",
+      "ru": "Ваше время будет освобождено. Вы всегда сможете записаться на новую консультацию."
+    },
+    "mb_confirm_cancel": {
+      "en": "Yes, cancel it",
+      "lv": "Jā, atcelt",
+      "ru": "Да, отменить"
+    },
+    "mb_keep": {
+      "en": "Keep booking",
+      "lv": "Paturēt rezervāciju",
+      "ru": "Оставить запись"
+    },
+    "mb_canceled_msg": {
+      "en": "This booking has been canceled.",
+      "lv": "Šī rezervācija ir atcelta.",
+      "ru": "Эта запись была отменена."
+    },
+    "mb_completed_msg": {
+      "en": "This consultation has already taken place.",
+      "lv": "Šī konsultācija jau ir notikusi.",
+      "ru": "Эта консультация уже состоялась."
+    },
+    "mb_updated": {
+      "en": "Your booking has been updated.",
+      "lv": "Jūsu rezervācija ir atjaunināta.",
+      "ru": "Ваша запись обновлена."
+    },
+    "mb_not_found": {
+      "en": "We could not find this booking. The link may be invalid or expired.",
+      "lv": "Šo rezervāciju neizdevās atrast. Saite var būt nederīga vai novecojusi.",
+      "ru": "Не удалось найти эту запись. Ссылка может быть недействительной или устаревшей."
+    },
+    "mb_err": {
+      "en": "Something went wrong. Please try again.",
+      "lv": "Kaut kas nogāja greizi. Lūdzu, mēģiniet vēlreiz.",
+      "ru": "Что-то пошло не так. Пожалуйста, попробуйте ещё раз."
+    },
+    "mb_loading": {
+      "en": "Loading your booking…",
+      "lv": "Ielādē jūsu rezervāciju…",
+      "ru": "Загружаем вашу запись…"
+    }
+  },
+  "modals": {
+    "booking": {
+      "bk_select_date": {
+        "en": "Select a Date",
+        "lv": "Izvēlieties datumu",
+        "ru": "Выберите дату"
+      },
+      "bk_select_time": {
+        "en": "Select a Time",
+        "lv": "Izvēlieties laiku",
+        "ru": "Выберите время"
+      },
+      "bk_your_details": {
+        "en": "Your Details",
+        "lv": "Jūsu dati",
+        "ru": "Ваши данные"
+      },
+      "bk_back": {
+        "en": "Back",
+        "lv": "Atpakaļ",
+        "ru": "Назад"
+      },
+      "bk_full_name": {
+        "en": "Full Name",
+        "lv": "Pilns vārds",
+        "ru": "Полное имя"
+      },
+      "bk_email": {
+        "en": "Email",
+        "lv": "E-pasts",
+        "ru": "Эл. почта"
+      },
+      "bk_name_ph": {
+        "en": "Enter your name",
+        "lv": "Ievadiet savu vārdu",
+        "ru": "Введите ваше имя"
+      },
+      "bk_confirm": {
+        "en": "Confirm Booking",
+        "lv": "Apstiprināt rezervāciju",
+        "ru": "Подтвердить запись"
+      },
+      "bk_confirmed": {
+        "en": "Booking Confirmed",
+        "lv": "Rezervācija apstiprināta",
+        "ru": "Запись подтверждена"
+      },
+      "bk_done": {
+        "en": "Done",
+        "lv": "Gatavs",
+        "ru": "Готово"
+      },
+      "bk_err": {
+        "en": "Please enter your name and a valid email.",
+        "lv": "Lūdzu, ievadiet savu vārdu un derīgu e-pastu.",
+        "ru": "Пожалуйста, введите имя и корректный e-mail."
+      },
+      "bk_medium": {
+        "en": "Email or Zoom",
+        "lv": "E-pasts vai Zoom",
+        "ru": "Эл. почта или Zoom"
+      },
+      "bk_blurb": {
+        "en": "Pick a date and time that suits you. We'll confirm your consultation by email.",
+        "lv": "Izvēlieties sev ērtu datumu un laiku. Mēs apstiprināsim jūsu konsultāciju pa e-pastu.",
+        "ru": "Выберите удобные дату и время. Мы подтвердим консультацию по электронной почте."
+      },
+      "bk_at": {
+        "en": "at",
+        "lv": "plkst.",
+        "ru": "в"
+      },
+      "bk_done_a": {
+        "en": "Your {min}-minute consultation is scheduled for",
+        "lv": "Jūsu {min} minūšu konsultācija ir ieplānota",
+        "ru": "Ваша {min}-минутная консультация назначена на"
+      },
+      "bk_done_b": {
+        "en": "A confirmation has been sent to",
+        "lv": "Apstiprinājums ir nosūtīts uz",
+        "ru": "Подтверждение отправлено на"
+      },
+      "bk_loading": {
+        "en": "Loading available times…",
+        "lv": "Ielādē pieejamos laikus…",
+        "ru": "Загружаем доступное время…"
+      },
+      "bk_no_times": {
+        "en": "No free times on this day.",
+        "lv": "Šajā dienā brīvu laiku nav.",
+        "ru": "На этот день свободного времени нет."
+      },
+      "bk_api_err": {
+        "en": "Could not complete the booking. Please try again.",
+        "lv": "Neizdevās pabeigt rezervāciju. Lūdzu, mēģiniet vēlreiz.",
+        "ru": "Не удалось завершить запись. Пожалуйста, попробуйте ещё раз."
+      },
+      "bk_demo_note": {
+        "en": "Demo mode — the booking API is not connected, so this booking was not saved.",
+        "lv": "Demo režīms — rezervāciju API nav pieslēgts, tāpēc šī rezervācija netika saglabāta.",
+        "ru": "Демо-режим — API записи не подключён, поэтому эта запись не была сохранена."
+      }
+    },
+    "consultation": {
+      "consult_kicker": {
+        "en": "Free consultation",
+        "lv": "Bezmaksas konsultācija",
+        "ru": "Бесплатная консультация"
+      },
+      "consult_title": {
+        "en": "Let’s plan your project",
+        "lv": "Saplānosim jūsu projektu",
+        "ru": "Спланируем ваш проект"
+      },
+      "consult_blurb": {
+        "en": "Tell us what you have in mind. A specialist reviews your request and gets back within one business day — no obligation.",
+        "lv": "Pastāstiet, kas jūsu prātā. Speciālists izskatīs jūsu pieprasījumu un atbildēs vienas darba dienas laikā — bez saistībām.",
+        "ru": "Расскажите, что у вас на уме. Специалист рассмотрит запрос и ответит в течение одного рабочего дня — без обязательств."
+      },
+      "consult_pt1": {
+        "en": "Reply within 1 business day",
+        "lv": "Atbilde 1 darba dienas laikā",
+        "ru": "Ответ за 1 рабочий день"
+      },
+      "consult_pt2": {
+        "en": "Free, no-obligation estimate",
+        "lv": "Bezmaksas tāme bez saistībām",
+        "ru": "Бесплатная смета без обязательств"
+      },
+      "consult_pt3": {
+        "en": "5-year workmanship warranty",
+        "lv": "5 gadu darbu garantija",
+        "ru": "5 лет гарантии на работы"
+      },
+      "consult_form_title": {
+        "en": "Request a consultation",
+        "lv": "Pieteikt konsultāciju",
+        "ru": "Заказать консультацию"
+      },
+      "consult_form_sub": {
+        "en": "We just need a few details to reach you.",
+        "lv": "Mums nepieciešama tikai daža informācija saziņai.",
+        "ru": "Нам нужно несколько деталей для связи."
+      },
+      "consult_name": {
+        "en": "Full name",
+        "lv": "Vārds, uzvārds",
+        "ru": "Имя и фамилия"
+      },
+      "consult_phone": {
+        "en": "Phone number",
+        "lv": "Tālruņa numurs",
+        "ru": "Номер телефона"
+      },
+      "consult_email": {
+        "en": "Email",
+        "lv": "E-pasts",
+        "ru": "Эл. почта"
+      },
+      "consult_msg": {
+        "en": "What can we help with?",
+        "lv": "Kā varam palīdzēt?",
+        "ru": "Чем мы можем помочь?"
+      },
+      "consult_ph_name": {
+        "en": "Your name",
+        "lv": "Jūsu vārds",
+        "ru": "Ваше имя"
+      },
+      "consult_ph_msg": {
+        "en": "Briefly describe your project (optional)",
+        "lv": "Īsi aprakstiet projektu (nav obligāti)",
+        "ru": "Кратко опишите проект (необязательно)"
+      },
+      "consult_submit": {
+        "en": "Send request",
+        "lv": "Nosūtīt pieprasījumu",
+        "ru": "Отправить запрос"
+      },
+      "consult_sending": {
+        "en": "Sending…",
+        "lv": "Sūta…",
+        "ru": "Отправка…"
+      },
+      "consult_err_fields": {
+        "en": "Please add your name, phone and a valid email.",
+        "lv": "Lūdzu, norādiet vārdu, tālruni un derīgu e-pastu.",
+        "ru": "Укажите имя, телефон и верный e-mail."
+      },
+      "consult_err_title": {
+        "en": "Couldn’t send your request",
+        "lv": "Neizdevās nosūtīt pieprasījumu",
+        "ru": "Не удалось отправить"
+      },
+      "consult_err_msg": {
+        "en": "Something went wrong on our side. Please try again — your details are still here.",
+        "lv": "Radās kļūda mūsu pusē. Lūdzu, mēģiniet vēlreiz — jūsu dati ir saglabāti.",
+        "ru": "Что-то пошло не так. Попробуйте ещё раз — ваши данные сохранены."
+      },
+      "consult_retry": {
+        "en": "Try again",
+        "lv": "Mēģināt vēlreiz",
+        "ru": "Повторить"
+      },
+      "consult_done_title": {
+        "en": "Request received",
+        "lv": "Pieprasījums saņemts",
+        "ru": "Запрос принят"
+      },
+      "consult_done_msg": {
+        "en": "Thanks, {name}. We’ll be in touch at {email} within one business day.",
+        "lv": "Paldies, {name}. Sazināsimies ar jums ({email}) vienas darba dienas laikā.",
+        "ru": "Спасибо, {name}. Мы свяжемся ({email}) в течение одного рабочего дня."
+      },
+      "consult_done_btn": {
+        "en": "Done",
+        "lv": "Gatavs",
+        "ru": "Готово"
+      }
+    }
+  },
+  "faq": {
+    "fq_title": {
+      "en": "Help Center",
+      "lv": "Palīdzības centrs",
+      "ru": "Центр помощи"
+    },
+    "q1": {
+      "en": "What construction services do you offer?",
+      "lv": "Kādus būvniecības pakalpojumus jūs piedāvājat?",
+      "ru": "Какие строительные услуги вы предлагаете?"
+    },
+    "a1": {
+      "en": "We specialize in drywall partition installation, interior finishing, and various final-stage construction works. Our team also provides professional site management and supervision to ensure every project meets quality and safety standards.",
+      "lv": "Mēs specializējamies ģipškartona starpsienu montāžā, iekšdarbu apdarē un dažādos noslēguma būvdarbos. Mūsu komanda nodrošina arī profesionālu būvdarbu vadību un uzraudzību, lai katrs projekts atbilstu kvalitātes un drošības standartiem.",
+      "ru": "Мы специализируемся на монтаже гипсокартонных перегородок, внутренней отделке и различных завершающих строительных работах. Наша команда также обеспечивает профессиональное управление и надзор, чтобы каждый проект соответствовал стандартам качества и безопасности."
+    },
+    "q2": {
+      "en": "How long does drywall and finishing work take?",
+      "lv": "Cik ilgi aizņem ģipškartona un apdares darbi?",
+      "ru": "Сколько времени занимают работы по гипсокартону и отделке?"
+    },
+    "a2": {
+      "en": "The timeline depends on the project size, layout complexity, and surface condition. For standard residential or office spaces, partition installation and finishing can typically be completed within a few days. Larger or more detailed projects may require additional time to ensure quality.",
+      "lv": "Termiņš ir atkarīgs no projekta apjoma, izkārtojuma sarežģītības un virsmas stāvokļa. Standarta dzīvojamām vai biroja telpām starpsienu montāžu un apdari parasti var pabeigt dažās dienās. Lielākiem projektiem var būt nepieciešams vairāk laika kvalitātes nodrošināšanai.",
+      "ru": "Сроки зависят от размера проекта, сложности планировки и состояния поверхности. Для стандартных жилых или офисных помещений монтаж перегородок и отделку обычно можно завершить за несколько дней. Более крупные проекты могут потребовать дополнительного времени для обеспечения качества."
+    },
+    "q3": {
+      "en": "Do you provide free estimates?",
+      "lv": "Vai jūs sniedzat bezmaksas tāmes?",
+      "ru": "Вы делаете бесплатные сметы?"
+    },
+    "a3": {
+      "en": "Yes — free, no-obligation estimates. Call us at +371 2687 2727 or request a consultation and we'll get back to you promptly.",
+      "lv": "Jā — bezmaksas tāmes bez saistībām. Zvaniet mums pa +371 2687 2727 vai piesakiet konsultāciju, un mēs ātri sazināsimies.",
+      "ru": "Да — бесплатные сметы без обязательств. Позвоните нам по +371 2687 2727 или закажите консультацию, и мы быстро свяжемся с вами."
+    },
+    "q4": {
+      "en": "How do I know if my space needs drywall or finishing repairs?",
+      "lv": "Kā es zinu, vai manai telpai nepieciešams ģipškartons vai apdares remonts?",
+      "ru": "Как понять, нужен ли моему помещению гипсокартон или ремонт отделки?"
+    },
+    "a4": {
+      "en": "Cracks, uneven surfaces, moisture damage, or dated finishes are common signs. Book a free inspection and our team will assess exactly what your space needs.",
+      "lv": "Plaisas, nelīdzenas virsmas, mitruma bojājumi vai novecojusi apdare ir biežas pazīmes. Piesakiet bezmaksas apskati, un mūsu komanda precīzi novērtēs, kas nepieciešams jūsu telpai.",
+      "ru": "Трещины, неровные поверхности, повреждения от влаги или устаревшая отделка — частые признаки. Закажите бесплатный осмотр, и наша команда точно оценит, что нужно вашему помещению."
+    },
+    "q5": {
+      "en": "Are your services covered by a warranty?",
+      "lv": "Vai jūsu pakalpojumiem ir garantija?",
+      "ru": "Покрываются ли ваши услуги гарантией?"
+    },
+    "a5": {
+      "en": "Absolutely. All our finishing and drywall work is backed by a 5-year warranty for your peace of mind.",
+      "lv": "Protams. Visiem mūsu apdares un ģipškartona darbiem ir 5 gadu garantija jūsu mieram.",
+      "ru": "Разумеется. Все наши работы по отделке и гипсокартону покрыты 5-летней гарантией для вашего спокойствия."
+    }
+  },
+  "cta": {
+    "cta_title": {
+      "en": "Are you ready to discuss your renovation?",
+      "lv": "Vai esat gatavs pārrunāt savu renovāciju?",
+      "ru": "Готовы обсудить ваш ремонт?"
+    },
+    "cta_sub": {
+      "en": "Protect and transform your home with high-quality finishing and drywall services. From small repairs to complete renovations — we handle it all professionally. Get your free consultation today!",
+      "lv": "Aizsargājiet un pārveidojiet savu māju ar augstas kvalitātes apdari un ģipškartona pakalpojumiem. No maziem remontiem līdz pilnīgai renovācijai — mēs to visu paveicam profesionāli. Saņemiet bezmaksas konsultāciju jau šodien!",
+      "ru": "Защитите и преобразите ваш дом с помощью качественной отделки и услуг по гипсокартону. От мелкого ремонта до полной реновации — мы делаем всё профессионально. Получите бесплатную консультацию сегодня!"
+    },
+    "cta_btn": {
+      "en": "Request a Consultation",
+      "lv": "Pieteikt konsultāciju",
+      "ru": "Заказать консультацию"
+    }
+  },
+  "footer": {
+    "foot_tagline": {
+      "en": "Protect and transform your home with high-quality finishing and drywall services.",
+      "lv": "Aizsargājiet un pārveidojiet savu māju ar augstas kvalitātes apdari un ģipškartona pakalpojumiem.",
+      "ru": "Защитите и преобразите ваш дом с помощью качественной отделки и услуг по гипсокартону."
+    },
+    "foot_nav": {
+      "en": "Navigation",
+      "lv": "Navigācija",
+      "ru": "Навигация"
+    },
+    "foot_services": {
+      "en": "Services",
+      "lv": "Pakalpojumi",
+      "ru": "Услуги"
+    },
+    "foot_home": {
+      "en": "Home",
+      "lv": "Sākums",
+      "ru": "Главная"
+    },
+    "foot_company": {
+      "en": "Company",
+      "lv": "Uzņēmums",
+      "ru": "Компания"
+    },
+    "foot_review": {
+      "en": "Review",
+      "lv": "Atsauksmes",
+      "ru": "Отзывы"
+    },
+    "sv_drywall": {
+      "en": "Drywall Partition Wall Installation",
+      "lv": "Ģipškartona starpsienu montāža",
+      "ru": "Монтаж гипсокартонных перегородок"
+    },
+    "sv_interior": {
+      "en": "Complete Interior Finishing Works",
+      "lv": "Pilna iekšdarbu apdare",
+      "ru": "Полная внутренняя отделка"
+    },
+    "sv_emergency": {
+      "en": "Emergency Construction Work",
+      "lv": "Avārijas būvdarbi",
+      "ru": "Аварийные строительные работы"
+    },
+    "sv_mgmt": {
+      "en": "Construction Management & Supervision",
+      "lv": "Būvdarbu vadība un uzraudzība",
+      "ru": "Управление и надзор за строительством"
+    },
+    "copyright": {
+      "en": "© 2025 SIA \"SHAKUR\" — All Right Reserved",
+      "lv": "© 2025 SIA \"SHAKUR\" — Visas tiesības aizsargātas",
+      "ru": "© 2025 SIA \"SHAKUR\" — Все права защищены"
+    },
+    "privacy": {
+      "en": "Privacy Policy",
+      "lv": "Privātuma politika",
+      "ru": "Политика конфиденциальности"
+    },
+    "a11y_footer_nav": {
+      "en": "Footer navigation",
+      "lv": "Kājenes navigācija",
+      "ru": "Навигация в подвале"
+    },
+    "a11y_footer_services": {
+      "en": "Footer services",
+      "lv": "Kājenes pakalpojumi",
+      "ru": "Услуги в подвале"
+    }
+  },
+  "coming_soon": {
+    "cs_kicker": {
+      "en": "SIA Shakur · Rīga, Latvia",
+      "lv": "SIA Shakur · Rīga, Latvija",
+      "ru": "SIA Shakur · Рига, Латвия"
+    },
+    "cs_headline": {
+      "en": "Website coming soon",
+      "lv": "Mājaslapa drīzumā",
+      "ru": "Сайт скоро откроется"
+    },
+    "cs_sub": {
+      "en": "We are building something worthy of the work we do. Our new site — services, projects and online booking — launches shortly.",
+      "lv": "Mēs veidojam kaut ko tik kvalitatīvu kā mūsu darbs. Mūsu jaunā vietne — pakalpojumi, projekti un tiešsaistes pieteikšanās — tiks atklāta drīzumā.",
+      "ru": "Мы создаём нечто достойное нашей работы. Наш новый сайт — услуги, проекты и онлайн-запись — откроется совсем скоро."
+    },
+    "cs_reach": {
+      "en": "In the meantime, reach us",
+      "lv": "Tikmēr sazinieties ar mums",
+      "ru": "А пока свяжитесь с нами"
+    },
+    "cs_email_label": {
+      "en": "Email us",
+      "lv": "Rakstiet mums",
+      "ru": "Написать нам"
+    },
+    "cs_foot": {
+      "en": "© 2026 SIA Shakur — Interior finishing & construction. All rights reserved.",
+      "lv": "© 2026 SIA Shakur — Iekšdarbu apdare un būvniecība. Visas tiesības aizsargātas.",
+      "ru": "© 2026 SIA Shakur — Внутренняя отделка и строительство. Все права защищены."
+    },
+    "cs_admin_title": {
+      "en": "Team access",
+      "lv": "Komandas piekļuve",
+      "ru": "Доступ для команды"
+    },
+    "cs_admin_sub": {
+      "en": "Sign in to manage projects, services and bookings.",
+      "lv": "Piesakieties, lai pārvaldītu projektus, pakalpojumus un pieteikumus.",
+      "ru": "Войдите, чтобы управлять проектами, услугами и записями."
+    },
+    "cs_admin_btn": {
+      "en": "Open admin login",
+      "lv": "Atvērt administratora pieteikšanos",
+      "ru": "Открыть вход администратора"
+    }
+  },
+  "notfound": {
+    "nf_title": {
+      "en": "404 — Wrong Turn at the Construction Site",
+      "lv": "404 — Nepareizs pagrieziens būvlaukumā",
+      "ru": "404 — Не туда свернули на стройке"
+    },
+    "nf_sub": {
+      "en": "Looks like this page hasn't been built yet… or maybe it got drywalled over.",
+      "lv": "Šķiet, šī lapa vēl nav uzbūvēta… vai varbūt tā tika apšūta ar ģipškartonu.",
+      "ru": "Похоже, эта страница ещё не построена… или её зашили гипсокартоном."
+    },
+    "nf_home": {
+      "en": "Return to Home",
+      "lv": "Atgriezties sākumā",
+      "ru": "На главную"
+    },
+    "nf_contact": {
+      "en": "Contact Us",
+      "lv": "Sazināties",
+      "ru": "Связаться"
+    },
+    "a11y_blueprint": {
+      "en": "Blueprint with a magnifying glass",
+      "lv": "Rasējums ar palielināmo stiklu",
+      "ru": "Чертёж с увеличительным стеклом"
+    }
+  },
+  "misc": {
+    "media_counts": {
+      "mc_image": {
+        "en": "image",
+        "lv": "attēls",
+        "ru": "фото"
+      },
+      "mc_images": {
+        "en": "images",
+        "lv": "attēli",
+        "ru": "фото"
+      },
+      "mc_video": {
+        "en": "video",
+        "lv": "video",
+        "ru": "видео"
+      },
+      "mc_videos": {
+        "en": "videos",
+        "lv": "video",
+        "ru": "видео"
+      }
+    },
+    "media_labels": {
+      "m_photos": {
+        "en": "Photos",
+        "lv": "Foto",
+        "ru": "Фото"
+      },
+      "m_videos": {
+        "en": "Videos",
+        "lv": "Video",
+        "ru": "Видео"
+      },
+      "m_zoomhint": {
+        "en": "Tap to open & zoom",
+        "lv": "Pieskaries, lai atvērtu un tuvinātu",
+        "ru": "Нажмите, чтобы открыть и увеличить"
+      },
+      "m_gallery_t": {
+        "en": "A Closer Look at the Work",
+        "lv": "Tuvāks ieskats darbā",
+        "ru": "Взгляд на работу вблизи"
+      },
+      "m_walk": {
+        "en": "Site walkthrough",
+        "lv": "Objekta apskats",
+        "ru": "Обзор объекта"
+      },
+      "m_progress": {
+        "en": "Work in progress",
+        "lv": "Darbs procesā",
+        "ru": "Работа в процессе"
+      },
+      "m_video_hint": {
+        "en": "Video preview",
+        "lv": "Video priekšskatījums",
+        "ru": "Видео-превью"
+      }
+    },
+    "process_steps": {
+      "proc_title": {
+        "en": "From Consultation to Completion",
+        "lv": "No konsultācijas līdz pabeigšanai",
+        "ru": "От консультации до завершения"
+      },
+      "s1_t": {
+        "en": "Schedule a Free Inspection",
+        "lv": "Pieteikt bezmaksas apskati",
+        "ru": "Записаться на бесплатный осмотр"
+      },
+      "s1_d": {
+        "en": "Reach out to us to book a free inspection at your convenience.",
+        "lv": "Sazinieties ar mums, lai pieteiktu bezmaksas apskati sev ērtā laikā.",
+        "ru": "Свяжитесь с нами, чтобы записаться на бесплатный осмотр в удобное время."
+      },
+      "s2_t": {
+        "en": "Get a Customized Quote",
+        "lv": "Saņemt pielāgotu tāmi",
+        "ru": "Получить индивидуальную смету"
+      },
+      "s2_d": {
+        "en": "Based on our inspection, we'll provide a clear and detailed offer.",
+        "lv": "Pamatojoties uz apskati, mēs sniegsim skaidru un detalizētu piedāvājumu.",
+        "ru": "На основе осмотра мы предоставим чёткое и детальное предложение."
+      },
+      "s3_t": {
+        "en": "Professional Service Execution",
+        "lv": "Profesionāla pakalpojuma izpilde",
+        "ru": "Профессиональное выполнение"
+      },
+      "s3_d": {
+        "en": "Our skilled team gets to work, using top-quality materials.",
+        "lv": "Mūsu prasmīgā komanda ķeras pie darba, izmantojot augstākās kvalitātes materiālus.",
+        "ru": "Наша команда приступает к работе, используя материалы высшего качества."
+      },
+      "s4_t": {
+        "en": "Final Walkthrough & Warranty",
+        "lv": "Gala apskate un garantija",
+        "ru": "Финальный осмотр и гарантия"
+      },
+      "s4_d": {
+        "en": "We ensure your satisfaction with a final walkthrough.",
+        "lv": "Mēs nodrošinām jūsu apmierinātību ar noslēguma apskati.",
+        "ru": "Мы гарантируем вашу удовлетворённость финальным осмотром."
+      }
+    },
+    "services_static": {
+      "svc_drywall_t": {
+        "en": "Drywall Partition Wall Installation",
+        "lv": "Ģipškartona starpsienu montāža",
+        "ru": "Монтаж гипсокартонных перегородок"
+      },
+      "svc_drywall_d": {
+        "en": "Expertise in drywall partition systems — precise installation, leveling, and finishing for functional and aesthetic interiors.",
+        "lv": "Pieredze ģipškartona starpsienu sistēmās — precīza montāža, līmeņošana un apdare funkcionāliem un estētiskiem interjeriem.",
+        "ru": "Опыт в системах гипсокартонных перегородок — точный монтаж, выравнивание и отделка для функциональных и эстетичных интерьеров."
+      },
+      "svc_interior_t": {
+        "en": "Complete Interior Finishing Works",
+        "lv": "Pilna iekšdarbu apdare",
+        "ru": "Полная внутренняя отделка"
+      },
+      "svc_interior_d": {
+        "en": "From plastering to painting and flooring — complete interior finishing delivered with precision and care.",
+        "lv": "No apmešanas līdz krāsošanai un grīdas segumiem — pilnīga iekšdarbu apdare ar precizitāti un rūpību.",
+        "ru": "От штукатурки до покраски и напольных покрытий — полная внутренняя отделка с точностью и заботой."
+      },
+      "svc_wood_t": {
+        "en": "Wood Construction Works",
+        "lv": "Koka konstrukciju darbi",
+        "ru": "Работы по деревянным конструкциям"
+      },
+      "svc_wood_d": {
+        "en": "From structural framing to detailed carpentry, we deliver strong and tailored wood solutions built to last.",
+        "lv": "No nesošā karkasa līdz detalizētai galdniecībai — mēs piegādājam izturīgus un pielāgotus koka risinājumus.",
+        "ru": "От несущего каркаса до детальной столярки — мы создаём прочные и индивидуальные деревянные решения."
+      },
+      "svc_masonry_t": {
+        "en": "Masonry Works",
+        "lv": "Mūrniecības darbi",
+        "ru": "Каменные работы"
+      },
+      "svc_masonry_d": {
+        "en": "We provide professional masonry services — from bricklaying to blockwork — ensuring durable, precise, and long-lasting structures.",
+        "lv": "Profesionāli mūrniecības pakalpojumi — no ķieģeļu mūra līdz bloku mūrim — nodrošinot izturīgas, precīzas konstrukcijas.",
+        "ru": "Профессиональные каменные работы — от кирпичной кладки до блоков — обеспечивая прочные и точные конструкции."
+      },
+      "svc_flooring_t": {
+        "en": "Flooring Installation",
+        "lv": "Grīdas seguma ieklāšana",
+        "ru": "Укладка напольных покрытий"
+      },
+      "svc_flooring_d": {
+        "en": "We handle every step of flooring — from preparation to installation — ensuring smooth, durable, and elegant results.",
+        "lv": "Mēs veicam katru grīdas seguma posmu — no sagatavošanas līdz ieklāšanai — nodrošinot gludu un elegantu rezultātu.",
+        "ru": "Мы выполняем каждый этап укладки пола — от подготовки до монтажа — обеспечивая гладкий и элегантный результат."
+      },
+      "svc_emergency_t": {
+        "en": "Emergency Construction Work",
+        "lv": "Avārijas būvdarbi",
+        "ru": "Аварийные строительные работы"
+      },
+      "svc_emergency_d": {
+        "en": "Fast response and repair of critical construction issues — to avoid project delays or safety risks.",
+        "lv": "Ātra reaģēšana un kritisku būvniecības problēmu novēršana — lai izvairītos no kavējumiem vai drošības riskiem.",
+        "ru": "Быстрое реагирование и устранение критических строительных проблем — чтобы избежать задержек и рисков."
+      },
+      "svc_drywall_long": {
+        "en": "Metal-frame partition systems built to spec — from single-layer office dividers to acoustic and fire-rated assemblies. We frame, board, tape, and finish to a paint-ready surface, keeping every site clean and dust-controlled.",
+        "lv": "Metāla karkasa starpsienu sistēmas pēc specifikācijas — no vienslāņa biroja starpsienām līdz skaņas izolācijas un ugunsdrošām konstrukcijām. Mēs montējam karkasu, apšujam, špaktelējam un apdarinām līdz krāsošanai gatavai virsmai, uzturot objektu tīru.",
+        "ru": "Каркасные перегородки по спецификации — от однослойных офисных до звукоизоляционных и огнестойких конструкций. Монтируем каркас, обшивку, шпаклюем и доводим до готовой под покраску поверхности, поддерживая чистоту."
+      },
+      "svc_interior_long": {
+        "en": "Full interior fit-out under one team — plastering, painting, tiling, and flooring coordinated on a single schedule. Every surface is prepared, primed, and finished with premium materials for clean edges and a lasting result.",
+        "lv": "Pilna iekštelpu apdare vienas komandas pārziņā — apmešana, krāsošana, flīzēšana un grīdas segumi vienā grafikā. Katra virsma tiek sagatavota, gruntēta un apdarināta ar augstākās kvalitātes materiāliem.",
+        "ru": "Полная внутренняя отделка одной командой — штукатурка, покраска, плитка и полы в едином графике. Каждая поверхность подготавливается, грунтуется и отделывается премиальными материалами."
+      },
+      "svc_wood_long": {
+        "en": "Structural framing and bespoke carpentry in sustainable, high-grade timber. We handle load-bearing frames, cladding, and fine detailing — precisely assembled, sanded, and sealed against wear and weather.",
+        "lv": "Nesošās koka konstrukcijas un individuāla galdniecība no ilgtspējīga, augstas kvalitātes kokmateriāla. Mēs veidojam nesošos karkasus, apšuvumu un smalku apdari — precīzi samontētu, slīpētu un noslēgtu.",
+        "ru": "Несущие деревянные конструкции и столярные изделия на заказ из экологичной древесины высокого класса. Выполняем каркасы, обшивку и тонкую детализацию — точная сборка, шлифовка и защитная пропитка."
+      },
+      "svc_masonry_long": {
+        "en": "Bricklaying and blockwork for durable, load-bearing structures. From foundation layout to pointing and sealing, we build weather-tested walls with precise coursing and clean joints.",
+        "lv": "Mūrēšana un bloku mūrējums izturīgām, nesošām konstrukcijām. No pamatu izlikšanas līdz šuvju aizpildīšanai mēs būvējam laikapstākļu pārbaudītas sienas ar precīzu rindojumu un tīrām šuvēm.",
+        "ru": "Кирпичная и блочная кладка для прочных несущих конструкций. От разметки основания до расшивки и герметизации мы возводим проверенные погодой стены с аккуратными швами."
+      },
+      "svc_flooring_long": {
+        "en": "Every floor type installed on a level, moisture-safe substrate — from screed prep to laying, fixing, and finishing. We seal, trim, and inspect each surface for a seamless, durable result.",
+        "lv": "Visu veidu grīdas segumi uz līdzenas, mitrumdrošas pamatnes — no sagatavošanas līdz ieklāšanai un apdarei. Mēs noslēdzam, apmalojam un pārbaudām katru virsmu.",
+        "ru": "Все типы напольных покрытий на ровном, влагозащищённом основании — от подготовки до укладки и отделки. Герметизируем, устанавливаем плинтусы и проверяем каждую поверхность."
+      },
+      "svc_emergency_long": {
+        "en": "Rapid response for critical construction issues — leaks, structural risks, and failures that threaten a schedule or safety. Our crews assess, stabilize, and repair to code, then document the fix so your project keeps moving.",
+        "lv": "Ātra reaģēšana uz kritiskām būvniecības problēmām — noplūdēm, konstrukciju riskiem un bojājumiem, kas apdraud grafiku vai drošību. Mūsu komandas izvērtē, stabilizē un remontē atbilstoši normām.",
+        "ru": "Быстрое реагирование на критические строительные проблемы — протечки, риски конструкций и повреждения, угрожающие срокам или безопасности. Бригады оценивают, стабилизируют и ремонтируют по нормам."
+      }
+    },
+    "a11y": {
+      "a11y_close": {
+        "en": "Close",
+        "lv": "Aizvērt",
+        "ru": "Закрыть"
+      },
+      "a11y_prev": {
+        "en": "Previous",
+        "lv": "Iepriekšējais",
+        "ru": "Предыдущий"
+      },
+      "a11y_next": {
+        "en": "Next",
+        "lv": "Nākamais",
+        "ru": "Следующий"
+      },
+      "a11y_prev_month": {
+        "en": "Previous month",
+        "lv": "Iepriekšējais mēnesis",
+        "ru": "Предыдущий месяц"
+      },
+      "a11y_next_month": {
+        "en": "Next month",
+        "lv": "Nākamais mēnesis",
+        "ru": "Следующий месяц"
+      },
+      "a11y_choose_date": {
+        "en": "Choose date",
+        "lv": "Izvēlieties datumu",
+        "ru": "Выберите дату"
+      }
+    },
+    "dates": {
+      "months_nom": {
+        "en": "January,February,March,April,May,June,July,August,September,October,November,December",
+        "lv": "janvāris,februāris,marts,aprīlis,maijs,jūnijs,jūlijs,augusts,septembris,oktobris,novembris,decembris",
+        "ru": "Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь"
+      },
+      "months_running": {
+        "en": "January,February,March,April,May,June,July,August,September,October,November,December",
+        "lv": "janvāris,februāris,marts,aprīlis,maijs,jūnijs,jūlijs,augusts,septembris,oktobris,novembris,decembris",
+        "ru": "января,февраля,марта,апреля,мая,июня,июля,августа,сентября,октября,ноября,декабря"
+      },
+      "weekdays_long": {
+        "en": "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday",
+        "lv": "Pirmdiena,Otrdiena,Trešdiena,Ceturtdiena,Piektdiena,Sestdiena,Svētdiena",
+        "ru": "Понедельник,Вторник,Среда,Четверг,Пятница,Суббота,Воскресенье"
+      },
+      "weekdays_short": {
+        "en": "Mo,Tu,We,Th,Fr,Sa,Su",
+        "lv": "P,O,T,C,Pk,S,Sv",
+        "ru": "Пн,Вт,Ср,Чт,Пт,Сб,Вс"
+      },
+      "dp_placeholder": {
+        "en": "Select date",
+        "lv": "Izvēlieties datumu",
+        "ru": "Выберите дату"
+      }
+    }
+  }
+}

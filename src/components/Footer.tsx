@@ -44,7 +44,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <nav className="flex flex-col" style={{ gap: 16 }} aria-label="Footer navigation">
+          <nav className="flex flex-col" style={{ gap: 16 }} aria-label={t.a11y_footer_nav}>
             <span className="text-ink font-medium" style={{ fontSize: 14, opacity: 0.7 }}>
               {t.foot_nav}
             </span>
@@ -62,7 +62,7 @@ export default function Footer() {
             </Link>
           </nav>
 
-          <nav className="flex flex-col" style={{ gap: 16 }} aria-label="Footer services">
+          <nav className="flex flex-col" style={{ gap: 16 }} aria-label={t.a11y_footer_services}>
             <span className="text-ink font-medium" style={{ fontSize: 14, opacity: 0.7 }}>
               {t.foot_services}
             </span>

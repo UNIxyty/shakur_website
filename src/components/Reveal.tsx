@@ -1,6 +1,19 @@
+import { useMemo } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import type { ReactNode, ElementType } from 'react';
 import { reveal, stagger, viewportOnce } from '../motion';
+
+/**
+ * `motion(as)` returns a NEW component type on every call. Calling it inline
+ * during render made React treat the element as a different component each
+ * re-render and remount the whole subtree — visibly, any state change on a
+ * page wiped what the visitor had typed into uncontrolled inputs below a
+ * Reveal (the contact form cleared when the purpose dropdown changed).
+ * Memoize per `as` so the type stays stable across renders.
+ */
+function useMotionComponent(as: ElementType) {
+  return useMemo(() => motion(as), [as]);
+}
 
 type Common = {
   children: ReactNode;
@@ -22,7 +35,7 @@ type RevealProps = Common & {
 
 /** A single element that fades + rises into view once. */
 export function Reveal({ children, className, style, as = 'div', variants, delay, ...rest }: RevealProps) {
-  const Comp = motion(as as ElementType);
+  const Comp = useMotionComponent(as as ElementType);
   return (
     <Comp
       className={className}
@@ -58,7 +71,7 @@ export function RevealGroup({
   delayChildren = 0,
   ...rest
 }: GroupProps) {
-  const Comp = motion(as as ElementType);
+  const Comp = useMotionComponent(as as ElementType);
   return (
     <Comp
       className={className}
@@ -76,7 +89,7 @@ export function RevealGroup({
 
 /** A child of <RevealGroup>. Inherits the parent's stagger timing. */
 export function RevealItem({ children, className, style, as = 'div', variants, ...rest }: Common) {
-  const Comp = motion(as as ElementType);
+  const Comp = useMotionComponent(as as ElementType);
   return (
     <Comp className={className} style={style} variants={variants ?? reveal} {...rest}>
       {children}

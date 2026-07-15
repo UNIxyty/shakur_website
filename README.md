@@ -28,13 +28,18 @@ Node/Express API (OpenAI + Resend) · Docker + Cloudflare Tunnel
 Public site is trilingual (EN / LV / RU, persisted under `localStorage.shakur_lang`);
 the admin is English-only, matching the design.
 
-**Coming-soon mode:** build with `VITE_SITE_MODE=coming_soon` and every public route
-serves the dark holding page instead (trilingual, with contact CTAs). `/admin/login`
-and `/admin/*` keep working, and the page itself has a discreet admin entry — the
-low-contrast dot in the bottom-left corner, or long-pressing the logo, reveals a
-"Team access" card linking to the login. Per-visitor override during a migration: a
-`shakur_site_mode=live` cookie (set manually or via a Cloudflare rule) shows that
-visitor the full site. Flip back with `VITE_SITE_MODE=live` + rebuild.
+**Coming-soon mode (runtime switch, v4):** the Live / Coming-soon toggle in
+**Settings ▸ Site settings** flips what anonymous visitors see **without a
+rebuild** — it persists to `site_settings.status`, which the public app reads on
+load. When set to Coming soon, anonymous visitors get the dark holding page
+(trilingual, with contact CTAs) while `/admin/*` and **signed-in admins keep
+seeing the full site**. Switching to Coming soon asks for confirmation, the admin
+top bar always shows a green *Live* / amber *Coming soon* pill, and the holding
+page keeps its discreet admin entry — the low-contrast corner dot or a logo
+long-press reveals a "Team access" card linking to the login. Two overrides
+remain: a `shakur_site_mode=live` cookie (set manually or via a Cloudflare rule)
+shows that visitor the full site, and `VITE_SITE_MODE` acts as the build-time
+fallback for the brief first paint and for installs without Supabase.
 
 The home hero's two CTAs open overlays (no navigation): **Book an Appointment** runs
 the full date → time → details → confirmed scheduling flow against live availability,
@@ -46,8 +51,9 @@ form) that stores the request and emails the admin.
 - **Projects & Services** — card grids with search, status filter, publish/draft
   toggle, duplicate, delete (confirm), drag-to-reorder. Editor drawer with:
   - **Media manager** — drag-drop or browse, up to 20 images/videos per record,
-    **real resumable uploads** (TUS) to Supabase Storage with live progress,
-    cancel/retry, set-cover, reorder, delete, video poster replacement.
+    uploads to the local-first `POST /api/media` pipeline with live progress +
+    a "Processing…" phase while videos transcode, cancel/retry, set-cover,
+    reorder, delete. Video posters are generated automatically (replaceable).
   - **EN / LV / RU tabs** with per-language completion dots (green = complete,
     orange = partial, grey = empty). Title / summary / description (+ service CTA
     label) are per-language; media, slug, category, dates, client, location and URL
@@ -72,8 +78,11 @@ form) that stores the request and emails the admin.
 - **Meetings** — Upcoming / Past / Canceled tabs, search, detail modal with notes,
   cancel + reschedule (attendee is emailed through the server when configured).
 - **Settings** — profile & password, site settings (title, tagline, contact,
-  announcement bar), integrations (read-only, masked — env is the source of truth),
-  notification toggles.
+  announcement bar, plus in v4: the **Live / Coming-soon status switch** with
+  confirmation + amber warning banner, and the **logo carousel manager** — add
+  logos via upload, rename, replace, delete, drag-to-reorder per row, and a
+  5–120 s speed slider the public marquee follows), integrations (read-only,
+  masked — env is the source of truth), notification toggles.
 - **Dashboard** — overview with stat cards and a visitor chart (demo data; there is
   no analytics backend) plus quick actions.
 
@@ -90,6 +99,16 @@ Home-page content lives in `home_sections` (one row per section, `draft` +
 `home_public` view — drafts are invisible to the anon key. The public home merges
 published content over the static defaults (`useHome()`), so an empty or
 pre-migration DB still renders the complete page.
+
+**Static copy — `src/i18n/strings.json` (v4):** every fixed string on the public
+site (nav, hero, forms, FAQ, footer, modals, coming-soon page, aria-labels, month/
+weekday names…) lives in one hand-editable JSON file, nested
+`section → [subsection →] key → { en, lv, ru }`. The site *reads* this file —
+edit a string, rebuild, and it changes everywhere. `src/i18n.ts` is just the
+loader; keys are typed from the JSON, so a typo'd `t.some_key` fails
+`tsc`. To add copy: drop a new leaf (all three languages) into the right section
+and reference it as `t.<key>`. Dynamic content (services, projects, home CMS) is
+deliberately *not* here — it comes from Supabase.
 
 ---
 
@@ -125,14 +144,21 @@ npm run lint      # tsc --noEmit
    | Situation | Run |
    | --- | --- |
    | Fresh project (nothing deployed yet) | `supabase/schema.sql`, then `supabase/storage.sql` |
-   | **Existing v1 database** (deployed before the admin-panel rebuild) | `supabase/migrate-v2.sql`, then `supabase/migrate-v3.sql`, then `supabase/storage.sql` |
-   | **Existing v2 database** (has `i18n`/`media` but no `home_sections`) | `supabase/migrate-v3.sql`, then `supabase/storage.sql` |
+   | **Existing v1 database** (deployed before the admin-panel rebuild) | `supabase/migrate-v2.sql`, then `migrate-v3.sql`, then `migrate-v4.sql`, then `storage.sql` |
+   | **Existing v2 database** (has `i18n`/`media` but no `home_sections`) | `supabase/migrate-v3.sql`, then `migrate-v4.sql`, then `storage.sql` |
+   | **Existing v3 database** (has `home_sections` but no `site_logos`) | `supabase/migrate-v4.sql` |
 
    `migrate-v2.sql` upgrades in place without losing rows you created: it backfills
    the new `i18n`/`media` JSON from the old text columns, then adds the `services`,
    `meetings`, `availability` and `site_settings` tables. `migrate-v3.sql` adds the
    home CMS (`home_sections` + `home_public` view, seeded with the design content),
-   `consultation_requests` and `media_assets`. All scripts are idempotent — safe to
+   `consultation_requests` and `media_assets`. `migrate-v4.sql` adds the runtime
+   site status + marquee speed columns to `site_settings`, the `site_logos` table
+   (seeded from the design's logo lists), and the `media_assets` video columns —
+   **note:** the runtime status defaults to `live`; if your site is currently
+   hidden via `VITE_SITE_MODE=coming_soon`, flip the switch in Settings right
+   after migrating (or uncomment the `update … set status='coming_soon'` line at
+   the bottom of the script). All scripts are idempotent — safe to
    run again.
 
    Until the migrations run, the deployed site shows its built-in static content
@@ -176,7 +202,7 @@ Client (baked into the bundle at **build** time — rebuild after changing):
 | Var | Purpose |
 | --- | --- |
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | Supabase for the browser (RLS-constrained) |
-| `VITE_SITE_MODE` | `live` (default) or `coming_soon` — the holding-page switch |
+| `VITE_SITE_MODE` | `live` (default) or `coming_soon` — since v4 only the **fallback** for the runtime switch in Settings ▸ Site settings (used for the first paint and when Supabase is unconfigured) |
 | `VITE_PUBLIC_BASE_URL` | public origin for the canonical/OG tags in `index.html` |
 
 Server (`api` service only — never sent to the browser; each one optional, the
@@ -207,9 +233,13 @@ Node 22 + Express, proxied by nginx at `/api/`:
   (service key; visitors have no table access), then emails the admin
   (`SUPPORT_EMAIL`) via the `emails/4-consultation-request` template. Email is
   best-effort — a provider failure never loses the stored request.
-- `POST /api/media` — home-CMS image upload (admin JWT required): streams to the
-  local media volume first and responds immediately, then replicates to Supabase
-  Storage in the background (see below).
+- `POST /api/media` — media upload (admin JWT required) for the home CMS, the
+  project/service galleries, and the logo carousel. Images (≤15 MB) stream to the
+  local media volume and respond immediately. **Videos (mp4/mov/webm, ≤512 MB)**
+  are transcoded in-request with ffmpeg to a web-optimized H.264/AAC mp4
+  (`+faststart`, ≤1080p, stream-copy when the source is already H.264) and get an
+  auto-generated jpg poster. Everything then replicates to Supabase Storage in the
+  background (see below).
 - `GET /api/slots?from&to` — open slots from the availability settings minus booked
   meetings (+buffer), block-outs, 1-day lead, 60-day horizon (Europe/Riga).
 - `POST /api/bookings` — validates the slot, stores the meeting, emails a
@@ -233,8 +263,26 @@ Trade-off: the local copy lives on this one machine; Supabase is the durable cop
 The volume survives `docker compose up -d --build`; to wipe local media:
 `docker compose down && docker volume rm shakur_website_media-uploads`.
 
-(Project/service gallery uploads are unchanged — they go straight to Supabase
-Storage with resumable TUS uploads and real progress.)
+### Video performance (v4)
+
+Why videos used to load slowly: gallery uploads went **raw** to Supabase Storage —
+un-transcoded phone footage with the mp4 index (`moov` atom) at the *end* of the
+file, so browsers had to fetch nearly the whole file before showing frame one, from
+a cross-origin bucket, with no poster image. v4 fixes every link in that chain:
+
+- uploads are transcoded server-side (ffmpeg) to H.264/AAC with `+faststart` and
+  capped at 1080p — already-compliant files are stream-copied, not re-encoded;
+- a poster jpg is generated automatically, so grids/lightbox show a still instantly;
+- players use `preload="none"` + the poster — nothing downloads until play;
+- files are served same-origin from nginx `/media/` with HTTP range support (206)
+  for instant seeking and `Cache-Control: public, max-age=2592000`.
+
+Older gallery rows that still point at Supabase URLs keep working (and still gain
+the preload/poster improvements). Optional: add a Cloudflare Cache Rule for
+`shakurs.com/media/*` (Eligible for cache, respect origin TTL) to serve media from
+the edge. Cloudflare caveats: the proxy caps upload body size (~100 MB on free
+plans) below the API's 512 MB limit, and very long transcodes can hit its ~100 s
+response timeout — prefer reasonably sized clips.
 
 ---
 
@@ -274,10 +322,10 @@ cutover:
 3. `.env` already carries `PUBLIC_BASE_URL` / `VITE_PUBLIC_BASE_URL` =
    `https://shakurs.com` — booking/consultation email links point at the new domain
    **now**, so don't delay the tunnel step long (or temporarily set them back).
-4. During the migration, gate visitors: `VITE_SITE_MODE=coming_soon` + rebuild
-   shows everyone the holding page; let yourself through with a Cloudflare rule (or
-   browser devtools) setting the cookie `shakur_site_mode=live`, or use Cloudflare
-   Access instead. When ready: `VITE_SITE_MODE=live` + rebuild.
+4. During the migration, gate visitors with the **Live / Coming-soon switch** in
+   Settings ▸ Site settings (no rebuild — signed-in admins still see the site);
+   let other teammates through with a Cloudflare rule (or browser devtools)
+   setting the cookie `shakur_site_mode=live`, or use Cloudflare Access instead.
 5. CORS needs no changes — the browser only ever calls `/api/` on its own origin
    (nginx proxies internally).
 

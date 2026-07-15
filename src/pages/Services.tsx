@@ -64,7 +64,7 @@ export default function Services() {
           </span>
           <h1
             id="services-title"
-            className="m-0 font-serif font-bold text-white"
+            className="hero-serif-clamp m-0 font-serif font-bold text-white"
             style={{
               maxWidth: 900,
               fontSize: 'clamp(48px, 8.5vw, 96px)',
@@ -106,7 +106,7 @@ export default function Services() {
                 key={c}
                 onClick={() => setFilter(c)}
                 aria-pressed={active}
-                className="cursor-pointer font-semibold transition-all duration-[180ms] hover:border-orange"
+                className="m-chip cursor-pointer font-semibold transition-all duration-[180ms] hover:border-orange"
                 style={{
                   border: `1px solid ${active ? '#160C00' : '#E7E5E4'}`,
                   background: active ? '#160C00' : '#FFFFFF',
@@ -184,7 +184,7 @@ export default function Services() {
                   </span>
                 </div>
 
-                <div className="flex flex-1 flex-col" style={{ padding: '22px 24px 24px', gap: 10 }}>
+                <div className="m-cardpad flex flex-1 flex-col" style={{ padding: '22px 24px 24px', gap: 10 }}>
                   <h2
                     className="m-0 font-serif font-bold"
                     style={{ fontSize: 28, lineHeight: 1.05, letterSpacing: '-0.6px' }}

@@ -4,6 +4,7 @@ import { motion, type Variants } from 'framer-motion';
 import type { Capability, L10n, Lang, MediaItem } from '../lib/db';
 import { pick, mediaCounts } from '../lib/db';
 import type { Dict } from '../i18n';
+import { useLang } from '../lang';
 import { assetUrl, bgImage } from '../lib/assets';
 
 /**
@@ -136,6 +137,16 @@ export function HeaderBackdrop({ variant, initial }: { variant: 'index' | 'detai
 // spans 2); ≤560px 1 col. Videos show a white play circle + "Video" chip.
 // ---------------------------------------------------------------------------
 
+/**
+ * Legacy seed rows carry `type:'video'` with an IMAGE path in `src` (no real
+ * file). Those may only ever be used as a still — never as a <source> — while
+ * real video files must never be used as a background/poster image.
+ */
+const isImagePath = (src: string) => /\.(png|jpe?g|webp|avif|gif)(\?.*)?$/i.test(src);
+
+/** Best displayable still for a video item ('' when none exists). */
+const videoStill = (m: MediaItem) => m.poster || (isImagePath(m.src) ? m.src : '');
+
 export function GalleryGrid({
   media,
   videoChip,
@@ -149,6 +160,9 @@ export function GalleryGrid({
     <div className="grid grid-cols-1 gap-4 min-[561px]:grid-cols-2 min-[901px]:grid-cols-3">
       {media.map((m, i) => {
         const lead = i === 0;
+        // Never background-image a video file — a poster-less video gets the
+        // dark tile (admin gallery style) with the white play circle.
+        const tileSrc = m.type === 'video' ? videoStill(m) : m.src;
         return (
           <motion.div
             key={m.id || i}
@@ -168,22 +182,30 @@ export function GalleryGrid({
             className={`group relative cursor-pointer overflow-hidden ${
               lead ? 'min-[561px]:col-span-2 min-[901px]:col-span-3' : ''
             }`}
-            style={{ aspectRatio: lead ? '21 / 9' : '4 / 3', borderRadius: 16, background: '#F0EFEC' }}
+            style={{
+              aspectRatio: lead ? '21 / 9' : '4 / 3',
+              borderRadius: 16,
+              background: m.type === 'video' && !tileSrc ? '#2A241E' : '#F0EFEC',
+            }}
           >
-            <div
-              className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
-              style={{
-                backgroundImage: bgImage(m.poster || m.src),
-                backgroundSize: 'cover',
-                backgroundPosition: '50% 50%',
-              }}
-            />
+            {tileSrc && (
+              <div
+                className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
+                style={{
+                  backgroundImage: bgImage(tileSrc),
+                  backgroundSize: 'cover',
+                  backgroundPosition: '50% 50%',
+                }}
+              />
+            )}
             {m.type === 'video' && (
               <>
-                <div
-                  className="absolute inset-0"
-                  style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.4))' }}
-                />
+                {tileSrc && (
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.4))' }}
+                  />
+                )}
                 <span
                   className="absolute flex items-center justify-center rounded-full text-ink"
                   style={{
@@ -247,6 +269,7 @@ export function DetailLightbox({
   onClose: () => void;
   onStep: (dir: 1 | -1) => void;
 }) {
+  const { t } = useLang();
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -268,9 +291,11 @@ export function DetailLightbox({
   const item = media[index] ?? media[0];
   if (!item) return null;
   const isVideo = item.type === 'video';
-  // Uploaded videos carry a real file in src (+ optional poster); seeds only
-  // have a poster-style src, so the <video> shows its poster until sources exist.
-  const posterSrc = assetUrl(item.poster || item.src);
+  const imageSrc = assetUrl(item.poster || item.src);
+  // Legacy seed "videos" have an image path in src — still usable as a poster,
+  // never as a <source>. Real uploads have a playable file (+ auto poster).
+  const still = isVideo ? videoStill(item) : '';
+  const playable = isVideo && !isImagePath(item.src);
 
   return (
     <motion.div
@@ -289,7 +314,7 @@ export function DetailLightbox({
     >
       <button
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t.a11y_close}
         className="absolute flex items-center justify-center transition-colors hover:bg-[rgba(255,255,255,0.25)]"
         style={{ ...lbBtn, top: 22, right: 22, width: 44, height: 44, borderRadius: 12 }}
       >
@@ -300,7 +325,7 @@ export function DetailLightbox({
       </button>
       <button
         onClick={() => onStep(-1)}
-        aria-label="Previous"
+        aria-label={t.a11y_prev}
         className="absolute flex items-center justify-center rounded-full transition-colors hover:bg-[rgba(255,255,255,0.25)]"
         style={{ ...lbBtn, left: 22, top: '50%', transform: 'translateY(-50%)', width: 48, height: 48 }}
       >
@@ -310,7 +335,7 @@ export function DetailLightbox({
       </button>
       <button
         onClick={() => onStep(1)}
-        aria-label="Next"
+        aria-label={t.a11y_next}
         className="absolute flex items-center justify-center rounded-full transition-colors hover:bg-[rgba(255,255,255,0.25)]"
         style={{ ...lbBtn, right: 22, top: '50%', transform: 'translateY(-50%)', width: 48, height: 48 }}
       >
@@ -331,19 +356,28 @@ export function DetailLightbox({
             className="relative w-full overflow-hidden"
             style={{ aspectRatio: '16 / 9', background: '#000', borderRadius: 14 }}
           >
+            {/* preload="none": nothing downloads until play — the poster (or a
+                black frame) carries the frame. Uploads are faststart mp4, so
+                playback starts immediately once requested. */}
             <video
               controls
-              poster={posterSrc}
+              playsInline
+              preload="none"
+              poster={still ? assetUrl(still) : undefined}
               className="h-full w-full object-contain"
               style={{ background: '#000' }}
             >
-              {/* Seed rows have no separate video file; uploaded rows do. */}
-              {item.poster ? <source src={assetUrl(item.src)} type="video/mp4" /> : null}
+              {playable && (
+                <source
+                  src={assetUrl(item.src)}
+                  type={item.src.toLowerCase().endsWith('.webm') ? 'video/webm' : 'video/mp4'}
+                />
+              )}
             </video>
           </div>
         ) : (
           <img
-            src={posterSrc}
+            src={imageSrc}
             alt={title}
             className="block w-full object-contain"
             style={{ maxHeight: '84vh', borderRadius: 14 }}
@@ -433,7 +467,7 @@ export function NumberedCardBand({
               whileInView="visible"
               viewport={rvViewport}
               variants={rv26}
-              className="flex flex-col bg-white transition-colors hover:border-[#DAD7D3]"
+              className="m-cardpad flex flex-col bg-white transition-colors hover:border-[#DAD7D3]"
               style={{ border: '1px solid #EAEAE8', borderRadius: 16, padding: 26, gap: 12 }}
             >
               <div className="flex items-center" style={{ gap: 12 }}>

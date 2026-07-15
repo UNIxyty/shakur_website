@@ -98,7 +98,7 @@ export default function ProjectDetail() {
           </div>
           <h1
             id="proj-title"
-            className="m-0 font-serif font-bold text-white"
+            className="hero-serif-clamp m-0 font-serif font-bold text-white"
             style={{
               maxWidth: 900,
               fontSize: 'clamp(46px, 8vw, 92px)',
@@ -172,7 +172,7 @@ export default function ProjectDetail() {
             whileInView="visible"
             viewport={rvViewport}
             variants={rv26}
-            className="bg-white min-[901px]:sticky min-[901px]:top-[96px]"
+            className="m-cardpad bg-white min-[901px]:sticky min-[901px]:top-[96px]"
             style={{
               border: '1px solid #EAEAE8',
               borderRadius: 18,

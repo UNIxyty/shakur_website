@@ -26,6 +26,13 @@ export type AdminShell = {
   refreshUpcoming: () => void;
 };
 
+/**
+ * Window-level event fired by SettingsView after the admin flips the site
+ * status (detail: 'live' | 'coming_soon') so the top-bar pill updates without
+ * a refetch — the "keep simple" shared-store variant.
+ */
+export const SITE_STATUS_EVENT = 'shakur:site-status';
+
 export const AdminShellContext = createContext<AdminShell | null>(null);
 
 export function useAdminShell(): AdminShell {

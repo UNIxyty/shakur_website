@@ -92,7 +92,9 @@
     color: #160c00;
   }
 
-  /* Consultation modal — the dark aside collapses on narrow screens (design @620px). */
+  /* Overlay side panels (consultation + booking) — the dark aside collapses on
+     narrow screens (design @620px hides .consult-aside; SHAKUR-Mobile keeps the
+     booking sheet aside-less too). */
   @media (max-width: 620px) {
     .consult-aside {
       display: none !important;
@@ -157,4 +159,126 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ===========================================================================
+   V4 MOBILE — SHAKUR-Mobile.dc.html spec legend.
+   Phones = ≤620px (the design's own phone cutoff, cf. .consult-aside).
+   Plain CSS after the Tailwind layers so it wins equal-specificity cascades;
+   !important is only used where an inline design style must be overridden.
+   =========================================================================== */
+@media (max-width: 620px) {
+  /* Partner-logo marquee runs edge-to-edge (wrapper lives in Home.tsx). */
+  .mq-wrap {
+    padding: 0 !important;
+  }
+
+  /* Hero serif clamps to ≤44px on phones (Services/Detail headers have a
+     46–48px clamp floor on desktop). */
+  .hero-serif-clamp {
+    font-size: 44px !important;
+  }
+
+  /* Primary CTAs ≥48px tall. */
+  .m-cta {
+    min-height: 48px;
+  }
+
+  /* Filter chips / small pills become thumb-sized (≥44px). */
+  .m-chip {
+    min-height: 44px;
+  }
+
+  /* Cards tighten to the 20px mobile padding scale. */
+  .m-cardpad {
+    padding: 20px !important;
+  }
+
+  /* Type floor — nothing below 12px on phones (11px weekday labels). */
+  .m-t12 {
+    font-size: 12px !important;
+  }
+
+  /* Home "From planning to perfection" — vertical timeline: number circle
+     left, copy right, connector line between steps (24px rhythm). */
+  .plan-grid {
+    display: flex !important;
+    flex-direction: column;
+    gap: 24px !important;
+  }
+
+  .plan-step {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: 34px 1fr;
+    align-items: start;
+    column-gap: 16px !important;
+    row-gap: 6px !important;
+  }
+
+  .plan-step .plan-num {
+    grid-row: 1 / span 2;
+  }
+
+  .plan-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 42px;
+    bottom: -24px;
+    width: 2px;
+    background: #e7e5e4;
+  }
+
+  /* Overlays (booking + consultation) become near-full-screen sheets. */
+  .overlay-card {
+    height: calc(100vh - 32px) !important;
+    height: calc(100dvh - 32px) !important;
+    max-height: none !important;
+  }
+
+  .overlay-panel {
+    padding: 20px !important;
+  }
+
+  .overlay-title {
+    padding-right: 44px;
+  }
+
+  /* Large ✕ (≥44px). */
+  .overlay-close {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Sheet fields are 46px tall (single-line inputs only). */
+  .overlay-field {
+    height: 46px;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Full-width 48px submit inside sheets. */
+  .overlay-submit {
+    width: 100%;
+    align-self: stretch;
+    min-height: 48px;
+  }
+
+  /* Booking calendar day cells reach the 44px tap height. */
+  .overlay-day {
+    min-height: 44px;
+  }
+
+  /* Custom Dropdown/DatePicker triggers ≥48px (admin compact `sm` excluded). */
+  .dd-trigger:not(.dd-sm),
+  .dp-trigger {
+    min-height: 48px;
+  }
+}
+
+/* Header drawer EN/LV/RU switch — 44px touch targets (drawer is ≤900px only). */
+.drawer-lang {
+  min-height: 44px;
+  min-width: 52px;
 }

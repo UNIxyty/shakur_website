@@ -1,6 +1,6 @@
--- SHAKUR — v3 schema: projects (i18n/media JSON), services, meetings,
--- availability, site_settings, home_sections (+ home_public view),
--- consultation_requests, media_assets.
+-- SHAKUR — v4 schema: projects (i18n/media JSON), services, meetings,
+-- availability, site_settings (+ v4 status/marquee_speed_s), home_sections
+-- (+ home_public view), consultation_requests, media_assets, site_logos.
 -- FULL fresh-install script. Idempotent — safe to re-run.
 -- Run in the Supabase SQL editor, or: psql "$DATABASE_URL" -f supabase/schema.sql
 --
@@ -9,7 +9,8 @@
 -- single-value. TS mirror of every shape lives in src/lib/db.ts.
 --
 -- Upgrading a deployed database? v1 -> v2: supabase/migrate-v2.sql, then
--- v2 -> v3: supabase/migrate-v3.sql. This file assumes a fresh install.
+-- v2 -> v3: supabase/migrate-v3.sql, then v3 -> v4: supabase/migrate-v4.sql
+-- (+ migrate-v4-media.sql). This file assumes a fresh install.
 
 create extension if not exists "pgcrypto";
 
@@ -168,6 +169,13 @@ create table if not exists public.site_settings (
   lang                 text        not null default 'English',
   announcement_enabled boolean     not null default true,
   announcement_text    text        not null default '',
+  -- v4: runtime site mode (replaces the build-time-only VITE_SITE_MODE flag)
+  status               text        not null default 'live'
+                       check (status in ('live', 'coming_soon')),
+  -- v4: logo-carousel speed — seconds per loop for row 1 (row 2 keeps the
+  -- designed 25/30 ratio client-side)
+  marquee_speed_s      integer     not null default 30
+                       check (marquee_speed_s between 5 and 120),
   updated_at           timestamptz not null default now()
 );
 
@@ -1354,9 +1362,11 @@ create policy "authenticated update consultation requests"
   with check (true);
 
 -- ===========================================================================
--- v3: media_assets — Home-CMS image uploads (POST /api/media). Files land in
--- the api container's MEDIA_DIR first (served by nginx at /media/), then
+-- v3: media_assets — Home-CMS + gallery uploads (POST /api/media). Files land
+-- in the api container's MEDIA_DIR first (served by nginx at /media/), then
 -- replicate to the public `media` storage bucket in the background.
+-- v4: videos are transcoded to h264+aac mp4 (+faststart) with an auto jpg
+-- poster; `kind` distinguishes the rows, `poster_path` is null for images.
 -- ===========================================================================
 create table if not exists public.media_assets (
   id                 uuid primary key default gen_random_uuid(),
@@ -1368,7 +1378,10 @@ create table if not exists public.media_assets (
   public_path        text   not null,          -- '/media/<filename>' (nginx, local-first)
   supabase_url       text,                     -- deterministic public URL in bucket `media`
   replication_status text   not null default 'pending'
-                     check (replication_status in ('pending', 'done', 'failed'))
+                     check (replication_status in ('pending', 'done', 'failed')),
+  kind               text   not null default 'image'
+                     check (kind in ('image', 'video')),
+  poster_path        text                      -- '/media/<uuid>.jpg' for videos
 );
 
 create index if not exists media_assets_created_idx
@@ -1415,3 +1428,71 @@ from (values
   }$j$::jsonb)
 ) as s(section, content)
 on conflict (section) do nothing;
+
+-- ===========================================================================
+-- v4: site_logos — home marquee logos ("Trusted by" row 1 / "Working with"
+-- row 2), managed in Settings ▸ Site settings. `img` is '/media/<file>' for
+-- uploads or an images/... preset path.
+-- ===========================================================================
+create table if not exists public.site_logos (
+  id         uuid primary key default gen_random_uuid(),
+  "row"      smallint not null check ("row" in (1, 2)),  -- ROW is reserved; quoted
+  name       text     not null default '',
+  img        text     not null,                -- '/media/<file>' or https URL
+  sort_order integer  not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists site_logos_row_sort_idx
+  on public.site_logos ("row", sort_order);
+
+alter table public.site_logos enable row level security;
+
+-- RLS: anon + authenticated SELECT (the public marquee reads them);
+-- authenticated ALL (the admin manages them). Same style as site_settings.
+drop policy if exists "public read site logos" on public.site_logos;
+create policy "public read site logos"
+  on public.site_logos for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "authenticated insert site logos" on public.site_logos;
+create policy "authenticated insert site logos"
+  on public.site_logos for insert
+  to authenticated
+  with check (true);
+
+drop policy if exists "authenticated update site logos" on public.site_logos;
+create policy "authenticated update site logos"
+  on public.site_logos for update
+  to authenticated
+  using (true)
+  with check (true);
+
+drop policy if exists "authenticated delete site logos" on public.site_logos;
+create policy "authenticated delete site logos"
+  on public.site_logos for delete
+  to authenticated
+  using (true);
+
+-- ===========================================================================
+-- v4 seed: the static LOGOS_ROW1 / LOGOS_ROW2 lists from src/data.ts. Only
+-- when the table is empty (uuid PKs — ON CONFLICT can't dedupe), so
+-- re-running never duplicates and never resurrects deleted logos.
+-- ===========================================================================
+insert into public.site_logos ("row", name, img, sort_order)
+select s."row", s.name, s.img, s.sort_order
+from (values
+  (1, 'Mapri',            'images/logo-trust-1.png', 0),
+  (1, 'Ekoteh',           'images/logo-trust-2.png', 1),
+  (1, 'Angern',           'images/logo-trust-3.png', 2),
+  (1, 'MGS',              'images/logo-trust-4.png', 3),
+  (1, 'Partner',          'images/logo-trust-5.png', 4),
+  (1, 'Asmetal',          'images/logo-trust-6.png', 5),
+  (2, 'Mitt & Perlebach', 'images/logo-def-1.png',   0),
+  (2, 'Lidl',             'images/logo-def-2.png',   1),
+  (2, 'Jysk',             'images/logo-def-3.png',   2),
+  (2, 'Kuldigas Parks',   'images/logo-def-4.png',   3),
+  (2, 'Kepler',           'images/logo-def-5.png',   4)
+) as s("row", name, img, sort_order)
+where not exists (select 1 from public.site_logos);

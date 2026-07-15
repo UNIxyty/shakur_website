@@ -33,7 +33,7 @@ const inputBtn: React.CSSProperties = { fontSize: 15, padding: '13px 22px', bord
 export default function Booking() {
   const { token } = useParams<{ token: string }>();
   const [search] = useSearchParams();
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   const [loading, setLoading] = useState(true);
   const [meeting, setMeeting] = useState<Meeting | null>(null);
@@ -154,13 +154,16 @@ export default function Booking() {
     );
   };
 
-  const dateLabel = (iso: string) =>
-    new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
+  // "Wednesday, July 15, 2026" — same shape per language, words localized
+  // (LV "Trešdiena, 15. jūlijs 2026" · RU "Среда, 15 июля 2026").
+  const dateLabel = (iso: string) => {
+    const d = new Date(`${iso}T00:00:00`);
+    const wd = t.weekdays_long.split(',')[(d.getDay() + 6) % 7];
+    const month = t.months_running.split(',')[d.getMonth()];
+    if (lang === 'lv') return `${wd}, ${d.getDate()}. ${month} ${d.getFullYear()}`;
+    if (lang === 'ru') return `${wd}, ${d.getDate()} ${month} ${d.getFullYear()}`;
+    return `${wd}, ${month} ${d.getDate()}, ${d.getFullYear()}`;
+  };
 
   const factRow = (icon: React.ReactNode, label: string, value: string, first = false) => (
     <div
@@ -226,7 +229,7 @@ export default function Booking() {
             initial="hidden"
             animate="visible"
             variants={rv26}
-            className="bg-white"
+            className="m-cardpad bg-white"
             style={{
               border: '1px solid #EAEAE8',
               borderRadius: 18,

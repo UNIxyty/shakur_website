@@ -16,8 +16,6 @@ type Step = 'date' | 'time' | 'details' | 'done';
  */
 type SlotSource = 'loading' | 'api' | 'demo';
 
-const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
 const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
   return h * 60 + m;
@@ -91,9 +89,15 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  // Localized calendar names (misc.dates leaves are comma-joined, Monday-first).
+  const weekdays = t.weekdays_short.split(',');
+  const monthsNom = t.months_nom.split(',');
+  const monthsRun = t.months_running.split(',');
+  const weekdaysLong = t.weekdays_long.split(',');
+
   const now = new Date();
   const monthBase = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
-  const monthLabel = monthBase.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const monthLabel = `${monthsNom[monthBase.getMonth()]} ${monthBase.getFullYear()}`;
 
   // Monday-first grid.
   const firstDow = (monthBase.getDay() + 6) % 7;
@@ -126,13 +130,17 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
 
   const times = slotSource === 'api' ? (date ? (slotMap[date] ?? []) : []) : generateSlots();
 
-  const dateLabel = date
-    ? new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-      })
-    : '';
+  // "Wednesday, July 15" — same shape per language, words localized
+  // (LV "Trešdiena, 15. jūlijs" · RU "Среда, 15 июля" with the genitive month).
+  const dateLabel = (() => {
+    if (!date) return '';
+    const d = new Date(`${date}T00:00:00`);
+    const wd = weekdaysLong[(d.getDay() + 6) % 7];
+    const month = monthsRun[d.getMonth()];
+    if (lang === 'lv') return `${wd}, ${d.getDate()}. ${month}`;
+    if (lang === 'ru') return `${wd}, ${d.getDate()} ${month}`;
+    return `${wd}, ${month} ${d.getDate()}`;
+  })();
 
   const confirm = async () => {
     if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
@@ -190,12 +198,13 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="relative flex overflow-hidden bg-white"
+        className="overlay-card relative flex overflow-hidden bg-white"
         style={{ borderRadius: 16, width: '100%', maxWidth: 860, height: '80vh', maxHeight: 600 }}
       >
-        {/* Sidebar */}
+        {/* Sidebar — hidden ≤620px (SHAKUR-Mobile: near-full-screen sheet,
+            the desktop side panel disappears; same rule as .consult-aside). */}
         <div
-          className="flex shrink-0 flex-col bg-ink text-white"
+          className="consult-aside flex shrink-0 flex-col bg-ink text-white"
           style={{ width: 290, padding: 30, gap: 18 }}
         >
           <img
@@ -256,13 +265,13 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
           initial={{ opacity: 0, y: 7 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="relative flex-1 overflow-y-auto"
+          className="overlay-panel relative flex-1 overflow-y-auto"
           style={{ minWidth: 0, padding: '24px 28px' }}
         >
           <button
             onClick={onClose}
-            aria-label="Close"
-            className="absolute flex cursor-pointer items-center justify-center border-0 text-muted"
+            aria-label={t.a11y_close}
+            className="overlay-close absolute flex cursor-pointer items-center justify-center border-0 text-muted"
             style={{
               top: 16,
               right: 16,
@@ -285,7 +294,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
               <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
                 <button
                   onClick={() => setMonthOffset((m) => Math.max(0, m - 1))}
-                  aria-label="Previous month"
+                  aria-label={t.a11y_prev_month}
                   className="flex cursor-pointer items-center justify-center bg-white text-muted"
                   style={{ width: 32, height: 32, border: '1px solid #E7E5E4', borderRadius: 8 }}
                 >
@@ -296,7 +305,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                 </span>
                 <button
                   onClick={() => setMonthOffset((m) => m + 1)}
-                  aria-label="Next month"
+                  aria-label={t.a11y_next_month}
                   className="flex cursor-pointer items-center justify-center bg-white text-muted"
                   style={{ width: 32, height: 32, border: '1px solid #E7E5E4', borderRadius: 8 }}
                 >
@@ -308,10 +317,10 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                 className="grid"
                 style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}
               >
-                {WEEKDAYS.map((d) => (
+                {weekdays.map((d) => (
                   <span
                     key={d}
-                    className="text-center font-semibold text-placeholder"
+                    className="m-t12 text-center font-semibold text-placeholder"
                     style={{ fontSize: 11 }}
                   >
                     {d}
@@ -332,7 +341,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                         setTime(null);
                         setStep('time');
                       }}
-                      className="border-0 font-medium"
+                      className="overlay-day border-0 font-medium"
                       style={{
                         aspectRatio: '1',
                         borderRadius: 9,
@@ -419,7 +428,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                       setErr('');
                     }}
                     placeholder={t.bk_name_ph}
-                    className="outline-none"
+                    className="overlay-field outline-none"
                     style={{
                       border: '1px solid #E7E5E4',
                       borderRadius: 10,
@@ -439,7 +448,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                       setErr('');
                     }}
                     placeholder={t.ph_email}
-                    className="outline-none"
+                    className="overlay-field outline-none"
                     style={{
                       border: '1px solid #E7E5E4',
                       borderRadius: 10,
@@ -458,7 +467,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                 <button
                   onClick={confirm}
                   disabled={submitting}
-                  className="cursor-pointer self-start border-0 bg-orange text-ink font-semibold transition-colors hover:bg-orange-hover"
+                  className="overlay-submit cursor-pointer self-start border-0 bg-orange text-ink font-semibold transition-colors hover:bg-orange-hover"
                   style={{
                     fontSize: 15,
                     padding: '13px 24px',

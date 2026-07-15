@@ -81,14 +81,8 @@ export default {
         // The one breakpoint the design defines: nav collapses below 900px.
         nav: '901px',
       },
-      keyframes: {
-        'scroll-left': { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } },
-        'scroll-right': { from: { transform: 'translateX(-50%)' }, to: { transform: 'translateX(0)' } },
-      },
-      animation: {
-        'scroll-left': 'scroll-left 30s linear infinite',
-        'scroll-right': 'scroll-right 25s linear infinite',
-      },
+      // v4: the marquee scroll keyframes moved into Marquee.tsx so the admin's
+      // marquee_speed_s can drive animation-duration inline.
       transitionTimingFunction: {
         'design-out': 'cubic-bezier(0.22, 1, 0.36, 1)',
       },

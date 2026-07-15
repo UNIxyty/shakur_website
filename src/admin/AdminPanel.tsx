@@ -2,7 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { AdminShellContext, type AdminShell, type ConfirmOptions } from './components/context';
+import type { SiteStatus } from '../lib/useSiteStatus';
+import {
+  AdminShellContext,
+  SITE_STATUS_EVENT,
+  type AdminShell,
+  type ConfirmOptions,
+} from './components/context';
 import {
   FONT,
   IconCalendar,
@@ -52,6 +58,10 @@ const STYLE = `
     .adm-topbar { padding: 16px 18px !important; }
     .adm-content { padding: 18px !important; }
     .adm-avatar-name { display: none !important; }
+  }
+  @media (max-width: 519px) {
+    .adm-status-txt { display: none !important; }
+    .adm-status-pill { padding: 9px !important; }
   }
 `;
 
@@ -145,7 +155,31 @@ export default function AdminPanel() {
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [adminEmail, setAdminEmail] = useState('');
   const [adminName, setAdminName] = useState('Admin');
+  const [siteStatus, setSiteStatus] = useState<SiteStatus>('live');
   const toastId = useRef(0);
+
+  // Site-status pill: fetch once on mount; SettingsView broadcasts flips via
+  // a window event (the "keep simple" shared-store variant). A pre-migrate-v4
+  // database has no status column — the query errors and the pill stays Live.
+  useEffect(() => {
+    if (!supabase) return;
+    void supabase
+      .from('site_settings')
+      .select('status')
+      .eq('id', 1)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        const value = (data as { status?: unknown } | null)?.status;
+        if (!error && (value === 'live' || value === 'coming_soon')) setSiteStatus(value);
+      });
+
+    const onFlip = (e: Event) => {
+      const value = (e as CustomEvent).detail as unknown;
+      if (value === 'live' || value === 'coming_soon') setSiteStatus(value);
+    };
+    window.addEventListener(SITE_STATUS_EVENT, onFlip);
+    return () => window.removeEventListener(SITE_STATUS_EVENT, onFlip);
+  }, []);
 
   // Design go(view): clears search and closes the mobile drawer on navigation.
   useEffect(() => {
@@ -579,6 +613,54 @@ export default function AdminPanel() {
                   }}
                 />
             </div>
+            {/* site-status pill (design line 110) — dot-only under 520px */}
+            {(() => {
+              const live = siteStatus === 'live';
+              const color = live ? '#1F8A5B' : '#B7791F';
+              const ring = live ? 'rgba(31,138,91,0.18)' : 'rgba(183,121,31,0.18)';
+              return (
+                <button
+                  type="button"
+                  className="adm-status-pill"
+                  title="Site status — click to change"
+                  onClick={() => navigate('/admin/settings?tab=site')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    border: `1px solid ${live ? '#C7E6D3' : '#F0D8B8'}`,
+                    background: live ? '#E6F4EC' : '#FDF0DC',
+                    color,
+                    fontFamily: FONT,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    padding: '8px 13px',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    marginLeft: 'auto',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.filter = 'brightness(0.97)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.filter = 'none';
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: color,
+                      boxShadow: `0 0 0 3px ${ring}`,
+                    }}
+                  />
+                  <span className="adm-status-txt">{live ? 'Live' : 'Coming soon'}</span>
+                </button>
+              );
+            })()}
             <div
               style={{
                 display: 'flex',

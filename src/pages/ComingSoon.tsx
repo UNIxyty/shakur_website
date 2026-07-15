@@ -343,7 +343,7 @@ export default function ComingSoon() {
             </span>
             <button
               onClick={() => setRevealed(false)}
-              aria-label="Close"
+              aria-label={t.a11y_close}
               className="flex cursor-pointer items-center justify-center border-0 text-muted"
               style={{ width: 24, height: 24, background: '#F5F5F4', borderRadius: 7 }}
             >

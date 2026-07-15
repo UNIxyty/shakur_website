@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLang } from '../lang';
 
 /**
  * Calendar date picker ported from DatePicker.dc.html — Dropdown-style trigger
@@ -19,22 +20,6 @@ export type DatePickerProps = {
   disabledDates?: string[];
   isDateDisabled?: (iso: string) => boolean;
 };
-
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-const DOW = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
 /** CSS `ease` — the design animates the popover with `dpIn .15s ease`. */
 const EASE_CSS: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
@@ -87,12 +72,17 @@ const ArrowSvg = ({ dir }: { dir: 'prev' | 'next' }) => (
 export function DatePicker({
   value,
   onChange,
-  placeholder = 'Select date',
+  placeholder,
   min,
   max,
   disabledDates,
   isDateDisabled,
 }: DatePickerProps) {
+  const { t } = useLang();
+  // Localized month/weekday names (misc.dates leaves, comma-joined, Monday-first).
+  const months = t.months_nom.split(',');
+  const dow = t.weekdays_short.split(',');
+  const ph = placeholder ?? t.dp_placeholder;
   const initial = parseIso(value) || new Date();
   const [open, setOpen] = useState(false);
   const [vy, setVy] = useState(initial.getFullYear());
@@ -159,7 +149,7 @@ export function DatePicker({
   const daysIn = new Date(vy, vm + 1, 0).getDate();
 
   const fmt = sel
-    ? `${sel.getDate()} ${MONTHS[sel.getMonth()].slice(0, 3)} ${sel.getFullYear()}`
+    ? `${sel.getDate()} ${months[sel.getMonth()].slice(0, 3)} ${sel.getFullYear()}`
     : null;
 
   const cells: { day: number; iso: string }[] = [];
@@ -172,7 +162,8 @@ export function DatePicker({
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openCal())}
-        className="flex w-full cursor-pointer items-center justify-between bg-white text-left font-medium outline-none"
+        // dp-trigger: ≥48px touch control on phones (index.css).
+        className="dp-trigger flex w-full cursor-pointer items-center justify-between bg-white text-left font-medium outline-none"
         style={{
           gap: 10,
           border: `1px solid ${open ? '#FB8500' : '#E7E5E4'}`,
@@ -185,7 +176,7 @@ export function DatePicker({
         }}
       >
         <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-          {fmt || placeholder}
+          {fmt || ph}
         </span>
         <span className="flex shrink-0" style={{ color: '#A8A29E' }}>
           <CalendarSvg />
@@ -196,7 +187,7 @@ export function DatePicker({
         {open && (
           <motion.div
             role="dialog"
-            aria-label="Choose date"
+            aria-label={t.a11y_choose_date}
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6, transition: { duration: 0.1, ease: EASE_CSS } }}
@@ -216,19 +207,19 @@ export function DatePicker({
               <button
                 type="button"
                 onClick={prevMonth}
-                aria-label="Previous month"
+                aria-label={t.a11y_prev_month}
                 className="flex cursor-pointer items-center justify-center border border-solid border-border-input bg-white text-muted hover:border-orange hover:text-orange"
                 style={{ width: 30, height: 30, borderRadius: 8 }}
               >
                 <ArrowSvg dir="prev" />
               </button>
               <span className="font-bold" style={{ fontSize: 14, color: '#160C00' }}>
-                {MONTHS[vm]} {vy}
+                {months[vm]} {vy}
               </span>
               <button
                 type="button"
                 onClick={nextMonth}
-                aria-label="Next month"
+                aria-label={t.a11y_next_month}
                 className="flex cursor-pointer items-center justify-center border border-solid border-border-input bg-white text-muted hover:border-orange hover:text-orange"
                 style={{ width: 30, height: 30, borderRadius: 8 }}
               >
@@ -240,10 +231,10 @@ export function DatePicker({
               className="grid"
               style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}
             >
-              {DOW.map((d) => (
+              {dow.map((d) => (
                 <span
                   key={d}
-                  className="text-center font-semibold"
+                  className="m-t12 text-center font-semibold"
                   style={{ fontSize: 11, color: '#A8A29E', padding: '4px 0' }}
                 >
                   {d}

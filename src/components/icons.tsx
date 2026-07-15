@@ -343,8 +343,8 @@ export const GearIcon = ({ size = 30 }: IconProps) => (
 );
 
 /** The 404 blueprint-and-magnifier illustration. */
-export const NotFoundArt = () => (
-  <svg width="300" height="250" viewBox="0 0 300 250" fill="none" role="img" aria-label="Blueprint with a magnifying glass">
+export const NotFoundArt = ({ label }: { label?: string }) => (
+  <svg width="300" height="250" viewBox="0 0 300 250" fill="none" role="img" aria-label={label ?? 'Blueprint with a magnifying glass'}>
     <rect x="30" y="20" width="230" height="180" rx="6" stroke="#D6D3D1" strokeWidth="2" />
     <rect x="58" y="52" width="82" height="52" stroke="#D6D3D1" strokeWidth="2" strokeDasharray="6 5" />
     <rect x="160" y="52" width="72" height="52" stroke="#D6D3D1" strokeWidth="2" strokeDasharray="6 5" />
