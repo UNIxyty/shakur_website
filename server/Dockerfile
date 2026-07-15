@@ -12,6 +12,13 @@ COPY server/lib ./lib
 COPY emails ./emails
 
 ENV NODE_ENV=production
+
+# Media uploads land here (compose mounts the `media-uploads` volume over it).
+# Owning it as `node` in the image matters: Docker copies this ownership into a
+# fresh named volume on first mount — without it the volume comes up root-owned
+# and every upload fails with EACCES, since the server runs as `node`.
+RUN mkdir -p /data/media && chown node:node /data/media
+
 USER node
 EXPOSE 8787
 
