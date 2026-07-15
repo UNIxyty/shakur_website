@@ -25,6 +25,16 @@ export function render(tpl, vars) {
   );
 }
 
+/** For visitor-typed values rendered into HTML templates (never trust PII). */
+function escapeHtml(v) {
+  return String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /**
  * emails/3-canceled-or-rescheduled.html holds BOTH variants; split on the
  * VARIANT A / VARIANT B comment markers (per the template's own instructions).
@@ -203,6 +213,40 @@ export async function sendCanceled(meeting, note) {
     to: meeting.email,
     subject: render(subject, vars),
     html: render(html, vars),
+    text: render(body, vars),
+  });
+}
+
+/**
+ * Admin notification for a new consultation request (emails/4). Goes to
+ * SUPPORT_EMAIL, not the visitor — so the vars carry the visitor's PII and
+ * every visitor-typed value is HTML-escaped for the .html variant.
+ */
+export async function sendConsultationNotice(request) {
+  const vars = {
+    name: request.name,
+    phone: request.phone,
+    email: request.email,
+    message: request.message || '—',
+    locale: request.locale,
+    created_at: new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'full',
+      timeStyle: 'short',
+      timeZone: TIMEZONE,
+    }).format(new Date(request.created_at)),
+    admin_link: `${env.publicUrl}/admin`,
+  };
+  const htmlVars = Object.fromEntries(
+    Object.entries(vars).map(([k, v]) => [k, k === 'admin_link' ? v : escapeHtml(v)]),
+  );
+  // Keep the visitor's line breaks readable in the HTML card.
+  htmlVars.message = htmlVars.message.replace(/\r?\n/g, '<br>');
+
+  const { subject, body } = subjectAndBody(template('4-consultation-request.txt'));
+  return deliver({
+    to: env.supportEmail,
+    subject: render(subject, vars),
+    html: render(template('4-consultation-request.html'), htmlVars),
     text: render(body, vars),
   });
 }

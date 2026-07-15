@@ -15,12 +15,9 @@ import Dropdown from '../../components/Dropdown';
 import DatePicker from '../../components/DatePicker';
 import { useAdminShell } from './context';
 import MediaManager from './MediaManager';
-import CapabilitiesEditor, {
-  emptyCapabilityItems,
-  type CapabilitiesValue,
-} from './CapabilitiesEditor';
+import CapabilitiesEditor, { type CapabilitiesValue } from './CapabilitiesEditor';
 import AiAction from './AiAction';
-import { aiWriteCapabilities, aiWriteText, type AiState, type AiTextField } from './ai';
+import { aiWriteText, type AiState, type AiTextField } from './ai';
 import { Field, FONT, IconClose, focusHandlers, inputStyle, monoInputStyle } from './ui';
 
 /**
@@ -76,7 +73,7 @@ function makeDraft(record: DrawerRecord, nextSortOrder: number): Draft {
     media: [],
     cover: '',
     i18n: { title: emptyL10n(), summary: emptyL10n(), description: emptyL10n() },
-    caps: { title: emptyL10n(), intro: emptyL10n(), items: emptyCapabilityItems() },
+    caps: { title: emptyL10n(), intro: emptyL10n(), items: [] },
     service: 'Drywall',
     status: 'In Progress',
     start: '',
@@ -104,7 +101,7 @@ function makeDraft(record: DrawerRecord, nextSortOrder: number): Draft {
       media: r.media,
       cover: r.cover,
       i18n: r.i18n,
-      caps: r.scope.items.length ? r.scope : { ...r.scope, items: emptyCapabilityItems() },
+      caps: r.scope ?? base.caps,
       service: r.service,
       status: r.status,
       start: r.start_date,
@@ -129,9 +126,7 @@ function makeDraft(record: DrawerRecord, nextSortOrder: number): Draft {
       media: r.media,
       cover: r.cover,
       i18n: r.i18n,
-      caps: r.capabilities.items.length
-        ? r.capabilities
-        : { ...r.capabilities, items: emptyCapabilityItems() },
+      caps: r.capabilities ?? base.caps,
       category: r.category,
       ctaLabel: r.cta_label,
       ctaLink: r.cta_link,
@@ -192,6 +187,8 @@ export default function EditorDrawer({
   const [draft, setDraft] = useState<Draft>(() => makeDraft(record, nextSortOrder));
   const [lang, setLang] = useState<Lang>('en');
   const [ai, setAi] = useState<Record<string, AiState>>({});
+  const [brief, setBrief] = useState('');
+  const [briefBusy, setBriefBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [autosave, setAutosave] = useState<{ state: 'on' | 'dirty' | 'saved'; at: string }>({
     state: 'on',
@@ -242,10 +239,12 @@ export default function EditorDrawer({
       return next;
     });
 
+  // Design v3 _aiWrite: note = describe brief when present, else the field's own text.
   const runAiText = async (field: AiTextField) => {
     setAi((a) => ({ ...a, [field]: 'gen' }));
     try {
-      const note = draft.i18n[field][lang] || draft.i18n[field].en || '';
+      const note =
+        brief.trim() || draft.i18n[field][lang] || draft.i18n[field].en || '';
       const out = await aiWriteText(field, note, draft.i18n[field].en);
       setDraft((d) => ({ ...d, i18n: { ...d.i18n, [field]: out } }));
       setAi((a) => ({ ...a, [field]: 'done' }));
@@ -254,17 +253,14 @@ export default function EditorDrawer({
     }
   };
 
-  const runAiCaps = async () => {
-    setAi((a) => ({ ...a, caps: 'gen' }));
-    try {
-      const note =
-        draft.caps.intro[lang] || draft.i18n.description[lang] || draft.i18n.title.en || noun;
-      const items = await aiWriteCapabilities(note);
-      setDraft((d) => ({ ...d, caps: { ...d.caps, items } }));
-      setAi((a) => ({ ...a, caps: 'done' }));
-    } catch {
-      setAi((a) => ({ ...a, caps: 'err' }));
+  // Design v3 _aiWriteAll: fills title, summary & description sequentially.
+  const generateFields = async () => {
+    if (briefBusy) return;
+    setBriefBusy(true);
+    for (const f of ['title', 'summary', 'description'] as AiTextField[]) {
+      await runAiText(f);
     }
+    setBriefBusy(false);
   };
 
   // ---- persist to Supabase ----
@@ -558,6 +554,111 @@ export default function EditorDrawer({
             onChange={(media, cover) => setDraft((d) => ({ ...d, media, cover }))}
           />
 
+          {/* Describe it — AI writes the copy (design v3) */}
+          <div
+            style={{
+              background: '#FFF9F1',
+              border: '1px solid #F0D8B8',
+              borderRadius: 13,
+              padding: 14,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: '#FB8500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <svg width={15} height={15} viewBox="0 0 24 24" fill="#160C00">
+                  <path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9z" />
+                </svg>
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 700 }}>
+                  Describe it — AI writes the copy
+                </span>
+                <span style={{ fontSize: 12, color: '#A8862B', lineHeight: 1.45 }}>
+                  Type what this {noun} {isProject ? 'was' : 'is'}. AI fills the title, summary
+                  &amp; description below in EN·LV·RU — you can still edit any field.
+                </span>
+              </div>
+            </div>
+            <textarea
+              value={brief}
+              onChange={(e) => setBrief(e.target.value)}
+              rows={2}
+              placeholder={
+                isProject
+                  ? 'e.g. Office fit-out for a retail HQ — drywall partitions, acoustic ceilings, and full interior finishing across two floors.'
+                  : 'e.g. Soundproof drywall partitions for offices — metal framing, acoustic insulation, taped to a paint-ready finish.'
+              }
+              style={{
+                border: '1px solid #F0D8B8',
+                borderRadius: 10,
+                padding: '11px 12px',
+                fontSize: 14,
+                outline: 'none',
+                fontFamily: FONT,
+                color: '#160C00',
+                background: '#fff',
+                resize: 'vertical',
+                minHeight: 52,
+              }}
+              {...focusHandlers()}
+            />
+            <button
+              type="button"
+              onClick={() => void generateFields()}
+              disabled={briefBusy}
+              style={{
+                alignSelf: 'flex-start',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                border: 'none',
+                cursor: briefBusy ? 'default' : 'pointer',
+                background: '#160C00',
+                color: '#fff',
+                fontFamily: FONT,
+                fontWeight: 600,
+                fontSize: 13,
+                padding: '9px 15px',
+                borderRadius: 9,
+                opacity: briefBusy ? 0.7 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!briefBusy) e.currentTarget.style.background = '#2A1E10';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#160C00';
+              }}
+            >
+              <svg
+                width={14}
+                height={14}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#FB8500"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9z" />
+              </svg>
+              Generate fields
+            </button>
+          </div>
+
           {/* language tabs */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div
@@ -815,12 +916,17 @@ export default function EditorDrawer({
           )}
 
           <CapabilitiesEditor
-            heading={isProject ? 'Scope of work' : 'What we can do'}
+            heading={isProject ? 'Scope of work' : 'Scope of work / capabilities'}
+            pageNoun={noun}
             value={draft.caps}
             lang={lang}
             onChange={(caps) => setDraft((d) => ({ ...d, caps }))}
-            aiState={ai.caps ?? 'idle'}
-            onAiRun={() => void runAiCaps()}
+            fallbackNote={
+              brief.trim() ||
+              draft.i18n.description.en ||
+              draft.i18n.title.en ||
+              'general construction and finishing works'
+            }
           />
         </div>
 

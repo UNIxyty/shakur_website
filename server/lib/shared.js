@@ -6,8 +6,13 @@ export const env = {
   openaiKey: process.env.OPENAI_API_KEY || '',
   resendKey: process.env.RESEND_API_KEY || '',
   resendFrom: process.env.RESEND_FROM || 'SHAKUR <bookings@shakur.lv>',
-  publicUrl: (process.env.PUBLIC_URL || '').replace(/\/+$/, ''),
+  // v3 renamed PUBLIC_URL -> PUBLIC_BASE_URL (domain migration); the old name
+  // still works as a fallback so a not-yet-updated .env keeps sending links.
+  publicUrl: (process.env.PUBLIC_BASE_URL || process.env.PUBLIC_URL || '').replace(/\/+$/, ''),
   supportEmail: process.env.SUPPORT_EMAIL || 'info@shakur.lv',
+  // Where POST /api/media stores files (compose mounts the `media-uploads`
+  // volume here; nginx serves the same volume read-only at /media/).
+  mediaDir: process.env.MEDIA_DIR || '/data/media',
 };
 
 // Service-role client — bypasses RLS. Server-side only; never expose this key.

@@ -86,3 +86,49 @@ export function mediaCounts(media: MediaItem[]): { images: number; videos: numbe
   }
   return { images, videos };
 }
+
+/* ---------------------------------------------------------------------------
+ * v3 — Home-page CMS, consultation requests, media assets.
+ * Matches the V3 ADDENDUM in .design/CONTRACTS.md exactly.
+ * ------------------------------------------------------------------------- */
+
+export interface HomePartnerItem { a: L10n; b: L10n }          // title / body
+export interface HomeText {
+  heroTitle: L10n; heroSub: L10n;
+  partnerTitle: L10n; partnerItems: HomePartnerItem[];
+  ctaTitle: L10n; ctaSub: L10n; ctaBtn: L10n;
+}
+export interface HomeImageSection { image: string }            // '/media/…' or 'images/…' preset
+export interface HomeSectionsContent {
+  hero: HomeImageSection; partner: HomeImageSection; cta: HomeImageSection; text: HomeText;
+}
+export type HomeSectionKey = 'hero' | 'partner' | 'cta' | 'text';
+export interface HomeSectionRow {                              // table home_sections
+  section: HomeSectionKey;
+  draft: unknown;      // HomeImageSection | HomeText
+  published: unknown | null;   // null = never published
+  status: 'draft' | 'published';
+  updated_at: string;
+}
+
+/** Hero "Request a Consultation" lead — server-side inserts only (PII). */
+export type ConsultationRequestRow = {
+  id: string;
+  created_at: string;
+  name: string; phone: string; email: string; message: string;
+  locale: Lang;
+  status: 'new' | 'contacted' | 'closed';
+};
+
+/** Home-CMS image upload metadata (POST /api/media; files served at /media/). */
+export type MediaAssetRow = {
+  id: string;
+  created_at: string;
+  filename: string;              // stored name (uuid.ext)
+  original_name: string;
+  mime: string;
+  size: number;
+  public_path: string;           // '/media/<filename>' (nginx, local-first)
+  supabase_url: string | null;   // deterministic public URL in bucket `media`
+  replication_status: 'pending' | 'done' | 'failed';
+};

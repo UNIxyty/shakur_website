@@ -181,12 +181,12 @@ const en = {
     'Protect and transform your home with high-quality finishing and drywall services. From small repairs to complete renovations — we handle it all professionally. Get your free consultation today!',
   cta_btn: 'Request a Consultation',
 
-  // FaqSection.dc.html
-  fq_title: 'Help Center: Roofing Edition',
+  // FaqSection.dc.html (v3 — "Help Center", design QA copy)
+  fq_title: 'Help Center',
   q1: 'What construction services do you offer?',
   a1: 'We specialize in drywall partition installation, interior finishing, and various final-stage construction works. Our team also provides professional site management and supervision to ensure every project meets quality and safety standards.',
   q2: 'How long does drywall and finishing work take?',
-  a2: 'Timelines depend on scope — a single partition can be done in a few days, while a full interior fit-out typically runs a few weeks. You get a clear schedule with every quote.',
+  a2: 'The timeline depends on the project size, layout complexity, and surface condition. For standard residential or office spaces, partition installation and finishing can typically be completed within a few days. Larger or more detailed projects may require additional time to ensure quality.',
   q3: 'Do you provide free estimates?',
   a3: "Yes — free, no-obligation estimates. Call us at +371 2687 2727 or request a consultation and we'll get back to you promptly.",
   q4: 'How do I know if my space needs drywall or finishing repairs?',
@@ -306,6 +306,51 @@ const en = {
   mb_not_found: 'We could not find this booking. The link may be invalid or expired.',
   mb_err: 'Something went wrong. Please try again.',
   mb_loading: 'Loading your booking…',
+
+  // v3 — consultation modal (Shakur.dc.html CONSULT table)
+  consult_kicker: 'Free consultation',
+  consult_title: 'Let’s plan your project',
+  consult_blurb:
+    'Tell us what you have in mind. A specialist reviews your request and gets back within one business day — no obligation.',
+  consult_pt1: 'Reply within 1 business day',
+  consult_pt2: 'Free, no-obligation estimate',
+  consult_pt3: '5-year workmanship warranty',
+  consult_form_title: 'Request a consultation',
+  consult_form_sub: 'We just need a few details to reach you.',
+  consult_name: 'Full name',
+  consult_phone: 'Phone number',
+  consult_email: 'Email',
+  consult_msg: 'What can we help with?',
+  consult_ph_name: 'Your name',
+  consult_ph_msg: 'Briefly describe your project (optional)',
+  consult_submit: 'Send request',
+  consult_sending: 'Sending…',
+  consult_err_fields: 'Please add your name, phone and a valid email.',
+  consult_err_title: 'Couldn’t send your request',
+  consult_err_msg:
+    'Something went wrong on our side. Please try again — your details are still here.',
+  consult_retry: 'Try again',
+  consult_done_title: 'Request received',
+  consult_done_msg: 'Thanks, {name}. We’ll be in touch at {email} within one business day.',
+  consult_done_btn: 'Done',
+
+  // v3 — home card grids empty states (Shakur.dc.html)
+  empty_svc_t: 'No services yet',
+  empty_svc_d: 'Published services will appear here. Add your first service from the admin panel.',
+  empty_proj_t: 'No projects yet',
+  empty_proj_d: 'Completed and in-progress projects will show up here once published.',
+
+  // v3 — coming-soon page (ShakurComingSoon.dc.html)
+  cs_kicker: 'SIA Shakur · Rīga, Latvia',
+  cs_headline: 'Website coming soon',
+  cs_sub:
+    'We are building something worthy of the work we do. Our new site — services, projects and online booking — launches shortly.',
+  cs_reach: 'In the meantime, reach us',
+  cs_email_label: 'Email us',
+  cs_foot: '© 2026 SIA Shakur — Interior finishing & construction. All rights reserved.',
+  cs_admin_title: 'Team access',
+  cs_admin_sub: 'Sign in to manage projects, services and bookings.',
+  cs_admin_btn: 'Open admin login',
 } as const;
 
 /** Every locale carries the same keys as `en`. */
@@ -486,7 +531,7 @@ const lv: Dict = {
   q1: 'Kādus būvniecības pakalpojumus jūs piedāvājat?',
   a1: 'Mēs specializējamies ģipškartona starpsienu montāžā, iekšdarbu apdarē un dažādos noslēguma būvdarbos. Mūsu komanda nodrošina arī profesionālu būvdarbu vadību un uzraudzību, lai katrs projekts atbilstu kvalitātes un drošības standartiem.',
   q2: 'Cik ilgi aizņem ģipškartona un apdares darbi?',
-  a2: 'Termiņi ir atkarīgi no apjoma — vienu starpsienu var izbūvēt dažās dienās, savukārt pilna interjera apdare parasti aizņem dažas nedēļas. Skaidru grafiku saņemat kopā ar katru tāmi.',
+  a2: 'Termiņš ir atkarīgs no projekta apjoma, izkārtojuma sarežģītības un virsmas stāvokļa. Standarta dzīvojamām vai biroja telpām starpsienu montāžu un apdari parasti var pabeigt dažās dienās. Lielākiem projektiem var būt nepieciešams vairāk laika kvalitātes nodrošināšanai.',
   q3: 'Vai jūs sniedzat bezmaksas tāmes?',
   a3: 'Jā — bezmaksas tāmes bez saistībām. Zvaniet mums pa +371 2687 2727 vai piesakiet konsultāciju, un mēs ātri sazināsimies.',
   q4: 'Kā es zinu, vai manai telpai nepieciešams ģipškartons vai apdares remonts?',
@@ -599,6 +644,48 @@ const lv: Dict = {
   mb_not_found: 'Šo rezervāciju neizdevās atrast. Saite var būt nederīga vai novecojusi.',
   mb_err: 'Kaut kas nogāja greizi. Lūdzu, mēģiniet vēlreiz.',
   mb_loading: 'Ielādē jūsu rezervāciju…',
+
+  consult_kicker: 'Bezmaksas konsultācija',
+  consult_title: 'Saplānosim jūsu projektu',
+  consult_blurb:
+    'Pastāstiet, kas jūsu prātā. Speciālists izskatīs jūsu pieprasījumu un atbildēs vienas darba dienas laikā — bez saistībām.',
+  consult_pt1: 'Atbilde 1 darba dienas laikā',
+  consult_pt2: 'Bezmaksas tāme bez saistībām',
+  consult_pt3: '5 gadu darbu garantija',
+  consult_form_title: 'Pieteikt konsultāciju',
+  consult_form_sub: 'Mums nepieciešama tikai daža informācija saziņai.',
+  consult_name: 'Vārds, uzvārds',
+  consult_phone: 'Tālruņa numurs',
+  consult_email: 'E-pasts',
+  consult_msg: 'Kā varam palīdzēt?',
+  consult_ph_name: 'Jūsu vārds',
+  consult_ph_msg: 'Īsi aprakstiet projektu (nav obligāti)',
+  consult_submit: 'Nosūtīt pieprasījumu',
+  consult_sending: 'Sūta…',
+  consult_err_fields: 'Lūdzu, norādiet vārdu, tālruni un derīgu e-pastu.',
+  consult_err_title: 'Neizdevās nosūtīt pieprasījumu',
+  consult_err_msg: 'Radās kļūda mūsu pusē. Lūdzu, mēģiniet vēlreiz — jūsu dati ir saglabāti.',
+  consult_retry: 'Mēģināt vēlreiz',
+  consult_done_title: 'Pieprasījums saņemts',
+  consult_done_msg: 'Paldies, {name}. Sazināsimies ar jums ({email}) vienas darba dienas laikā.',
+  consult_done_btn: 'Gatavs',
+
+  empty_svc_t: 'Vēl nav pakalpojumu',
+  empty_svc_d:
+    'Publicētie pakalpojumi parādīsies šeit. Pievienojiet pirmo pakalpojumu administratora panelī.',
+  empty_proj_t: 'Vēl nav projektu',
+  empty_proj_d: 'Pabeigtie un notiekošie projekti parādīsies šeit pēc publicēšanas.',
+
+  cs_kicker: 'SIA Shakur · Rīga, Latvija',
+  cs_headline: 'Mājaslapa drīzumā',
+  cs_sub:
+    'Mēs veidojam kaut ko tik kvalitatīvu kā mūsu darbs. Mūsu jaunā vietne — pakalpojumi, projekti un tiešsaistes pieteikšanās — tiks atklāta drīzumā.',
+  cs_reach: 'Tikmēr sazinieties ar mums',
+  cs_email_label: 'Rakstiet mums',
+  cs_foot: '© 2026 SIA Shakur — Iekšdarbu apdare un būvniecība. Visas tiesības aizsargātas.',
+  cs_admin_title: 'Komandas piekļuve',
+  cs_admin_sub: 'Piesakieties, lai pārvaldītu projektus, pakalpojumus un pieteikumus.',
+  cs_admin_btn: 'Atvērt administratora pieteikšanos',
 };
 
 const ru: Dict = {
@@ -776,7 +863,7 @@ const ru: Dict = {
   q1: 'Какие строительные услуги вы предлагаете?',
   a1: 'Мы специализируемся на монтаже гипсокартонных перегородок, внутренней отделке и различных завершающих строительных работах. Наша команда также обеспечивает профессиональное управление и надзор, чтобы каждый проект соответствовал стандартам качества и безопасности.',
   q2: 'Сколько времени занимают работы по гипсокартону и отделке?',
-  a2: 'Сроки зависят от объёма — одну перегородку можно сделать за несколько дней, а полную внутреннюю отделку обычно за несколько недель. Чёткий график вы получаете с каждой сметой.',
+  a2: 'Сроки зависят от размера проекта, сложности планировки и состояния поверхности. Для стандартных жилых или офисных помещений монтаж перегородок и отделку обычно можно завершить за несколько дней. Более крупные проекты могут потребовать дополнительного времени для обеспечения качества.',
   q3: 'Вы делаете бесплатные сметы?',
   a3: 'Да — бесплатные сметы без обязательств. Позвоните нам по +371 2687 2727 или закажите консультацию, и мы быстро свяжемся с вами.',
   q4: 'Как понять, нужен ли моему помещению гипсокартон или ремонт отделки?',
@@ -888,6 +975,48 @@ const ru: Dict = {
   mb_not_found: 'Не удалось найти эту запись. Ссылка может быть недействительной или устаревшей.',
   mb_err: 'Что-то пошло не так. Пожалуйста, попробуйте ещё раз.',
   mb_loading: 'Загружаем вашу запись…',
+
+  consult_kicker: 'Бесплатная консультация',
+  consult_title: 'Спланируем ваш проект',
+  consult_blurb:
+    'Расскажите, что у вас на уме. Специалист рассмотрит запрос и ответит в течение одного рабочего дня — без обязательств.',
+  consult_pt1: 'Ответ за 1 рабочий день',
+  consult_pt2: 'Бесплатная смета без обязательств',
+  consult_pt3: '5 лет гарантии на работы',
+  consult_form_title: 'Заказать консультацию',
+  consult_form_sub: 'Нам нужно несколько деталей для связи.',
+  consult_name: 'Имя и фамилия',
+  consult_phone: 'Номер телефона',
+  consult_email: 'Эл. почта',
+  consult_msg: 'Чем мы можем помочь?',
+  consult_ph_name: 'Ваше имя',
+  consult_ph_msg: 'Кратко опишите проект (необязательно)',
+  consult_submit: 'Отправить запрос',
+  consult_sending: 'Отправка…',
+  consult_err_fields: 'Укажите имя, телефон и верный e-mail.',
+  consult_err_title: 'Не удалось отправить',
+  consult_err_msg: 'Что-то пошло не так. Попробуйте ещё раз — ваши данные сохранены.',
+  consult_retry: 'Повторить',
+  consult_done_title: 'Запрос принят',
+  consult_done_msg: 'Спасибо, {name}. Мы свяжемся ({email}) в течение одного рабочего дня.',
+  consult_done_btn: 'Готово',
+
+  empty_svc_t: 'Пока нет услуг',
+  empty_svc_d:
+    'Опубликованные услуги появятся здесь. Добавьте первую услугу в панели администратора.',
+  empty_proj_t: 'Пока нет проектов',
+  empty_proj_d: 'Завершённые и текущие проекты появятся здесь после публикации.',
+
+  cs_kicker: 'SIA Shakur · Рига, Латвия',
+  cs_headline: 'Сайт скоро откроется',
+  cs_sub:
+    'Мы создаём нечто достойное нашей работы. Наш новый сайт — услуги, проекты и онлайн-запись — откроется совсем скоро.',
+  cs_reach: 'А пока свяжитесь с нами',
+  cs_email_label: 'Написать нам',
+  cs_foot: '© 2026 SIA Shakur — Внутренняя отделка и строительство. Все права защищены.',
+  cs_admin_title: 'Доступ для команды',
+  cs_admin_sub: 'Войдите, чтобы управлять проектами, услугами и записями.',
+  cs_admin_btn: 'Открыть вход администратора',
 };
 
 export const TR: Record<Lang, Dict> = { en, lv, ru };

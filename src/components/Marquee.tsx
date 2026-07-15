@@ -1,9 +1,15 @@
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { LogoItem } from '../data';
 import { assetUrl } from '../lib/assets';
 
 /**
- * Infinite logo marquee. The track holds the list twice and translates by -50%,
- * so the loop is seamless. Hovering the row pauses it (see .mq-row in index.css);
+ * Infinite logo marquee (v3, Shakur.dc.html).
+ *
+ * The track holds the logo list `repeat` times twice over and translates by
+ * -50%, so the loop is seamless. The repeat count is computed from the
+ * measured row/track widths (not a fixed doubling) so each half-track is
+ * always wider than the viewport — the marquee reads full from load with no
+ * edge gaps. Hovering the row pauses it (.mq-row in index.css);
  * prefers-reduced-motion stops it outright.
  */
 export default function Marquee({
@@ -15,7 +21,33 @@ export default function Marquee({
   direction: 'left' | 'right';
   label: string;
 }) {
-  const doubled = [...logos, ...logos];
+  const rowRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [repeat, setRepeat] = useState(2);
+
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const track = trackRef.current;
+    if (!row || !track || logos.length === 0) return;
+
+    const measure = () => {
+      const rowWidth = row.clientWidth;
+      // Width of one base list (incl. its share of the 3rem gaps).
+      const setWidth = track.scrollWidth / (2 * repeat);
+      if (rowWidth <= 0 || setWidth <= 0) return;
+      const needed = Math.max(2, Math.ceil(rowWidth / setWidth));
+      if (needed !== repeat) setRepeat(needed);
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(row);
+    return () => ro.disconnect();
+  }, [repeat, logos]);
+
+  // One half of the track = the list repeated `repeat` times; render it twice.
+  const half = Array.from({ length: repeat }, () => logos).flat();
+  const doubled = [...half, ...half];
 
   return (
     <div>
@@ -26,7 +58,7 @@ export default function Marquee({
         {label}:
       </p>
 
-      <div className="mq-row relative w-full overflow-hidden">
+      <div ref={rowRef} className="mq-row relative w-full overflow-hidden">
         <div
           className="absolute left-0 top-0 bottom-0 z-[2] pointer-events-none"
           style={{ width: 80, background: 'linear-gradient(to right, #fff, transparent)' }}
@@ -37,6 +69,7 @@ export default function Marquee({
         />
 
         <div
+          ref={trackRef}
           className={`mq-track flex items-center ${
             direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right'
           }`}
@@ -49,7 +82,7 @@ export default function Marquee({
                 className="mq-logo"
                 src={assetUrl(lg.img)}
                 alt={lg.name}
-                /* The second half of the track is a duplicate — hide it from AT. */
+                /* Everything past the first list is a repeat — hide it from AT. */
                 aria-hidden={i >= logos.length}
               />
             ) : (

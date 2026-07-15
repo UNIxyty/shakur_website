@@ -11,6 +11,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import Contact from './pages/Contact';
 import Booking from './pages/Booking';
 import NotFound from './pages/NotFound';
+import ComingSoon from './pages/ComingSoon';
 import AdminLogin from './admin/AdminLogin';
 import AdminPanel from './admin/AdminPanel';
 import RequireAuth from './admin/RequireAuth';
@@ -81,6 +82,19 @@ function PublicSite() {
   );
 }
 
+/**
+ * Site-mode gate (v3): when VITE_SITE_MODE=coming_soon every public route
+ * renders the ComingSoon holding page (no Header/Footer) while /admin/login
+ * and /admin/* keep working. A `shakur_site_mode=live` cookie overrides back
+ * to the live site — the domain-migration escape hatch. Live when unset.
+ */
+function comingSoonActive(): boolean {
+  return (
+    import.meta.env.VITE_SITE_MODE === 'coming_soon' &&
+    !document.cookie.includes('shakur_site_mode=live')
+  );
+}
+
 export default function App() {
   return (
     <MotionConfig reducedMotion="user">
@@ -95,7 +109,7 @@ export default function App() {
             </RequireAuth>
           }
         />
-        <Route path="*" element={<PublicSite />} />
+        <Route path="*" element={comingSoonActive() ? <ComingSoon /> : <PublicSite />} />
       </Routes>
     </MotionConfig>
   );

@@ -1,9 +1,11 @@
--- SHAKUR — storage bucket for admin media uploads (images + video).
+-- SHAKUR — storage buckets for admin media uploads.
 -- Run this in the Supabase SQL editor AFTER schema.sql.
 --
--- The admin drawer uploads covers + gallery media here (tus resumable uploads);
--- the public site reads them. Public read, authenticated write — the same
--- shape as the projects/services tables.
+-- `project-images`: gallery covers + media (tus resumable uploads, images +
+-- video). `media` (v3): Home-CMS images — the server API stores the primary
+-- copy locally (MEDIA_DIR, served at /media/) and replicates here in the
+-- background so a fresh box can still serve the files. Public read,
+-- authenticated write — the same shape as the projects/services tables.
 
 insert into storage.buckets (id, name, public, allowed_mime_types)
 values ('project-images', 'project-images', true,
@@ -37,3 +39,39 @@ create policy "authenticated delete project images"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'project-images');
+
+-- ---------------------------------------------------------------------------
+-- `media` — Home-CMS images (v3). POST /api/media uploads via the service key
+-- (bypasses RLS); the policies mirror project-images so an authenticated
+-- session could also write directly. Images only — matches the endpoint.
+-- ---------------------------------------------------------------------------
+insert into storage.buckets (id, name, public, allowed_mime_types)
+values ('media', 'media', true,
+        array['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'])
+on conflict (id) do update
+  set public             = excluded.public,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "public read media" on storage.objects;
+create policy "public read media"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'media');
+
+drop policy if exists "authenticated upload media" on storage.objects;
+create policy "authenticated upload media"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'media');
+
+drop policy if exists "authenticated update media" on storage.objects;
+create policy "authenticated update media"
+  on storage.objects for update
+  to authenticated
+  using (bucket_id = 'media');
+
+drop policy if exists "authenticated delete media" on storage.objects;
+create policy "authenticated delete media"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'media');

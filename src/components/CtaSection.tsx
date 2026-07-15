@@ -7,8 +7,21 @@ import { RevealGroup, RevealItem } from './Reveal';
 import { tapPress } from '../motion';
 import { bgImage } from '../lib/assets';
 
-/** CtaSection.dc.html */
-export default function CtaSection() {
+/**
+ * CtaSection.dc.html — copy/image default to the static design content, but the
+ * Home page passes the CMS-managed values (useHome) in via props.
+ */
+export default function CtaSection({
+  title,
+  sub,
+  btn,
+  image,
+}: {
+  title?: string;
+  sub?: string;
+  btn?: string;
+  image?: string;
+}) {
   const { t } = useLang();
 
   return (
@@ -19,7 +32,7 @@ export default function CtaSection() {
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: bgImage('images/cta-meeting.jpg'),
+          backgroundImage: bgImage(image || 'images/cta-meeting.jpg'),
           backgroundSize: 'cover',
           backgroundPosition: '60% 50%',
           filter: 'grayscale(1)',
@@ -42,7 +55,7 @@ export default function CtaSection() {
             id="cta-title"
             className="m-0 font-serif font-bold text-white text-cta-title"
           >
-            {t.cta_title}
+            {title || t.cta_title}
           </RevealItem>
 
           <RevealItem
@@ -55,7 +68,7 @@ export default function CtaSection() {
               maxWidth: 440,
             }}
           >
-            {t.cta_sub}
+            {sub || t.cta_sub}
           </RevealItem>
 
           <RevealItem>
@@ -71,7 +84,7 @@ export default function CtaSection() {
                   boxShadow: '0 10px 24px rgba(228,163,0,0.4)',
                 }}
               >
-                {t.cta_btn}
+                {btn || t.cta_btn}
                 <ArrowRight size={18} />
               </Link>
             </motion.div>

@@ -1,0 +1,24 @@
+Subject: New consultation request — {{name}}
+
+SHAKUR — ADMIN NOTIFICATION
+
+NEW CONSULTATION REQUEST
+
+{{name}} asked for a consultation through the website hero form.
+
+  Name:      {{name}}
+  Phone:     {{phone}}
+  Email:     {{email}}
+  Language:  {{locale}}
+  Received:  {{created_at}}
+
+Message:
+{{message}}
+
+Open the admin panel: {{admin_link}}
+
+Reply directly to the requester at {{email}} or call {{phone}}.
+
+--
+SIA SHAKUR · Rīga, Latvia
+Internal notification — a visitor submitted the consultation form on the website.

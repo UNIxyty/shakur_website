@@ -9,6 +9,16 @@
       name="description"
       content="From drywall installation to tiling and painting — high-quality interior finishing with clear pricing, on-time completion, and a 5-year warranty."
     />
+    <!-- %VITE_PUBLIC_BASE_URL% is replaced by Vite at build time (compose
+         passes it as a build arg; see .env.example — it must be set). -->
+    <link rel="canonical" href="%VITE_PUBLIC_BASE_URL%/" />
+    <meta property="og:url" content="%VITE_PUBLIC_BASE_URL%/" />
+    <meta property="og:title" content="SHAKUR — Interior Finish Experts" />
+    <meta
+      property="og:description"
+      content="From drywall installation to tiling and painting — high-quality interior finishing with clear pricing, on-time completion, and a 5-year warranty."
+    />
+    <meta property="og:image" content="%VITE_PUBLIC_BASE_URL%/images/home-hero.jpg" />
   </head>
   <body>
     <div id="root"></div>

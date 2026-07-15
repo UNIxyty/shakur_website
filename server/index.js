@@ -15,6 +15,8 @@ import {
   handleAdminCancel,
   handleAdminReschedule,
 } from './lib/bookings.js';
+import { handleCreateConsultation } from './lib/consultations.js';
+import { handleMediaUpload } from './lib/media.js';
 import { startReminderLoop } from './lib/reminders.js';
 
 const app = express();
@@ -35,6 +37,11 @@ app.post('/api/bookings', rateLimiter(20, HOUR), handleCreateBooking);
 app.get('/api/bookings/:token', handleGetBooking);
 app.post('/api/bookings/:token/cancel', handleCancelBooking);
 app.post('/api/bookings/:token/reschedule', handleRescheduleBooking);
+
+app.post('/api/consultations', rateLimiter(10, HOUR), handleCreateConsultation);
+
+// Home-CMS image uploads (multipart; express.json ignores non-JSON bodies).
+app.post('/api/media', requireAdmin, handleMediaUpload);
 
 app.post('/api/admin/meetings/:id/cancel', requireAdmin, handleAdminCancel);
 app.post('/api/admin/meetings/:id/reschedule', requireAdmin, handleAdminReschedule);

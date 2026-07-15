@@ -1,28 +1,66 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import { useLang } from '../lang';
-import { localizeService, SERVICES, LOGOS_ROW1, LOGOS_ROW2, SPACE_LABELS } from '../data';
+import { LOGOS_ROW1, LOGOS_ROW2, SPACE_LABELS, coverSrc } from '../data';
 import { useProjects } from '../lib/useProjects';
+import { useServices } from '../lib/useServices';
+import { useHome } from '../lib/useHome';
+import { pick } from '../lib/db';
 import { gradients } from '../tokens';
 import { ArrowRight, Check, ChevronRight, Pin, GridIcon, FinishIcon, TeamIcon, GearIcon } from '../components/icons';
-import { Reveal, RevealGroup, RevealItem } from '../components/Reveal';
+import { Reveal } from '../components/Reveal';
 import Marquee from '../components/Marquee';
 import FaqSection from '../components/FaqSection';
 import CtaSection from '../components/CtaSection';
+import BookingModal from '../components/BookingModal';
+import ConsultationModal from '../components/ConsultationModal';
 import { tapPress } from '../motion';
 import { bgImage, assetUrl } from '../lib/assets';
 
-export default function Home() {
-  const { t } = useLang();
-  const { projects } = useProjects();
-  const services = SERVICES.map((s) => localizeService(s, t));
+/**
+ * v3 section reveal — the design's .shk-reveal: opacity 0.8s ease +
+ * 30px rise 0.85s cubic-bezier(0.22,1,0.36,1). Every below-fold section
+ * enters with this; prefers-reduced-motion is honoured by <MotionConfig>.
+ */
+const sectionReveal: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      opacity: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] },
+      y: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+    },
+  },
+};
 
-  const valueProps = [
-    { t: t.pi_t, d: t.pi_d },
-    { t: t.bis_t, d: t.bis_d },
-    { t: t.fast_t, d: t.fast_d },
-    { t: t.stress_t, d: t.stress_d },
-  ];
+const heroInputStyle: React.CSSProperties = {
+  border: '1px solid #E7E5E4',
+  borderRadius: 10,
+  padding: '13px 14px',
+  fontSize: 15,
+  background: '#FAFAF9',
+};
+
+export default function Home() {
+  const { t, lang } = useLang();
+  const { projects } = useProjects();
+  const { services } = useServices();
+  const { content } = useHome();
+
+  // Hero form is controlled so "Request a Consultation" can pre-fill the modal.
+  const [heroEmail, setHeroEmail] = useState('');
+  const [heroPhone, setHeroPhone] = useState('');
+  const [booking, setBooking] = useState(false);
+  const [consult, setConsult] = useState(false);
+
+  const homeServices = services.map((s) => ({
+    slug: s.slug,
+    title: pick(s.i18n.title, lang),
+    desc: pick(s.i18n.summary, lang),
+    img: coverSrc(s),
+  }));
 
   const planning = [
     { n: 1, t: t.pl1_t, d: t.pl1_d },
@@ -40,209 +78,223 @@ export default function Home() {
 
   return (
     <div>
-      {/* ---------- HERO ---------- */}
-      <section className="relative overflow-hidden" aria-labelledby="hero-title">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: bgImage('images/home-hero.jpg'),
-            backgroundSize: 'cover',
-            backgroundPosition: '50% 40%',
-          }}
-        />
-        <div className="absolute inset-0" style={{ background: gradients.heroScrim }} />
-
-        <div
-          className="relative mx-auto flex flex-wrap items-center justify-between"
-          style={{ maxWidth: 1320, padding: '96px 30px 104px', gap: 48 }}
+      {/* ---------- FIRST VIEWPORT: hero + partner-logo marquee ---------- */}
+      <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 128px)' }}>
+        {/* HERO */}
+        <section
+          className="relative flex items-center overflow-hidden"
+          style={{ flex: 1 }}
+          aria-labelledby="hero-title"
         >
-          <RevealGroup
-            className="flex flex-col"
-            style={{ flex: 1, minWidth: 280, maxWidth: 680, gap: 16 }}
-            gap={0.12}
-          >
-            <RevealItem
-              as="h1"
-              id="hero-title"
-              className="m-0 font-serif font-bold text-white text-hero-title"
-            >
-              {t.hero_title}
-            </RevealItem>
-            <RevealItem
-              as="p"
-              className="m-0 text-on-dark"
-              style={{ fontSize: 17, lineHeight: 1.75, maxWidth: 560 }}
-            >
-              {t.hero_sub}
-            </RevealItem>
-          </RevealGroup>
-
-          <Reveal
-            as="form"
-            onSubmit={(e: React.FormEvent) => e.preventDefault()}
-            className="flex flex-col bg-white"
+          <div
+            className="absolute inset-0"
             style={{
-              width: 452,
-              maxWidth: '100%',
-              borderRadius: 16,
-              padding: 30,
-              gap: 16,
-              boxShadow: '0 30px 60px rgba(0,0,0,0.35)',
+              backgroundImage: bgImage(content.hero.image),
+              backgroundSize: 'cover',
+              backgroundPosition: '50% 40%',
             }}
-            delay={0.15}
+          />
+          <div className="absolute inset-0" style={{ background: gradients.heroScrim }} />
+
+          <div
+            className="relative mx-auto flex w-full flex-wrap items-center justify-between"
+            style={{ maxWidth: 1320, padding: '56px 30px', gap: 48 }}
           >
-            <img
-              src="/images/shakur-logo.svg"
-              alt="SHAKUR"
-              className="self-center"
-              style={{ height: 20, marginBottom: 4, filter: 'brightness(0)' }}
-            />
+            <div className="flex flex-col" style={{ flex: 1, minWidth: 280, maxWidth: 680, gap: 16 }}>
+              <h1 id="hero-title" className="m-0 font-serif font-bold text-white text-hero-title">
+                {pick(content.text.heroTitle, lang)}
+              </h1>
+              <p className="m-0 text-on-dark" style={{ fontSize: 17, lineHeight: 1.75, maxWidth: 560 }}>
+                {pick(content.text.heroSub, lang)}
+              </p>
+            </div>
 
-            <label className="flex flex-col text-ink font-medium" style={{ gap: 7, fontSize: 14 }}>
-              {t.form_email}
-              <input
-                type="email"
-                placeholder={t.ph_email}
-                className="outline-none"
-                style={{
-                  border: '1px solid #E7E5E4',
-                  borderRadius: 10,
-                  padding: '13px 14px',
-                  fontSize: 15,
-                  background: '#FAFAF9',
-                }}
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="flex flex-col bg-white"
+              style={{
+                width: 452,
+                maxWidth: '100%',
+                borderRadius: 16,
+                padding: 30,
+                gap: 16,
+                boxShadow: '0 30px 60px rgba(0,0,0,0.35)',
+              }}
+            >
+              <img
+                src="/images/shakur-logo.svg"
+                alt="SHAKUR"
+                className="self-center"
+                style={{ height: 20, marginBottom: 4, filter: 'brightness(0)' }}
               />
-            </label>
 
-            <label className="flex flex-col text-ink font-medium" style={{ gap: 7, fontSize: 14 }}>
-              {t.form_phone}
-              <input
-                type="tel"
-                placeholder={t.ph_phone}
-                className="outline-none"
-                style={{
-                  border: '1px solid #E7E5E4',
-                  borderRadius: 10,
-                  padding: '13px 14px',
-                  fontSize: 15,
-                  background: '#FAFAF9',
-                }}
-              />
-            </label>
+              <label className="flex flex-col text-ink font-medium" style={{ gap: 7, fontSize: 14 }}>
+                {t.form_email}
+                <input
+                  type="email"
+                  value={heroEmail}
+                  onChange={(e) => setHeroEmail(e.target.value)}
+                  placeholder={t.ph_email}
+                  className="outline-none"
+                  style={heroInputStyle}
+                />
+              </label>
 
-            <div className="flex" style={{ gap: 12, marginTop: 4 }}>
-              <motion.div whileTap={tapPress} style={{ flex: 1 }}>
-                <Link
-                  to="/contact"
-                  className="block text-center bg-orange text-ink font-semibold transition-colors duration-200 hover:bg-orange-hover hover:text-ink"
-                  style={{ fontSize: 14, padding: '13px 10px', borderRadius: 10 }}
+              <label className="flex flex-col text-ink font-medium" style={{ gap: 7, fontSize: 14 }}>
+                {t.form_phone}
+                <input
+                  type="tel"
+                  value={heroPhone}
+                  onChange={(e) => setHeroPhone(e.target.value)}
+                  placeholder={t.ph_phone}
+                  className="outline-none"
+                  style={heroInputStyle}
+                />
+              </label>
+
+              <div className="flex" style={{ gap: 12, marginTop: 4 }}>
+                <motion.button
+                  type="button"
+                  whileTap={tapPress}
+                  onClick={() => setConsult(true)}
+                  className="cursor-pointer border-0 text-center bg-orange text-ink font-semibold transition-colors duration-200 hover:bg-orange-hover"
+                  style={{ flex: 1, fontSize: 14, padding: '13px 10px', borderRadius: 10 }}
                 >
                   {t.nav_cta}
-                </Link>
-              </motion.div>
-              <motion.div whileTap={tapPress} style={{ flex: 1 }}>
-                <Link
-                  to="/contact"
-                  className="block text-center bg-yellow text-ink font-semibold transition-colors duration-200 hover:bg-yellow-hover hover:text-ink"
-                  style={{ fontSize: 14, padding: '13px 10px', borderRadius: 10 }}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileTap={tapPress}
+                  onClick={() => setBooking(true)}
+                  className="cursor-pointer border-0 text-center bg-yellow text-ink font-semibold transition-colors duration-200 hover:bg-yellow-hover"
+                  style={{ flex: 1, fontSize: 14, padding: '13px 10px', borderRadius: 10 }}
                 >
                   {t.form_book}
-                </Link>
-              </motion.div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---------- TRUST LOGOS ---------- */}
-      <section className="bg-white" style={{ padding: '44px 0 28px' }} aria-label="Partners">
-        <div className="mx-auto" style={{ maxWidth: 1200, padding: '0 24px' }}>
-          <div style={{ marginBottom: 30 }}>
-            <Marquee logos={LOGOS_ROW1} direction="left" label={t.partner_row1} />
+                </motion.button>
+              </div>
+            </form>
           </div>
-          <Marquee logos={LOGOS_ROW2} direction="right" label={t.partner_row2} />
-        </div>
-      </section>
+        </section>
+
+        {/* TRUST LOGOS — pinned at the bottom of the first viewport */}
+        <section className="shrink-0 bg-white" style={{ padding: '30px 0 24px' }} aria-label="Partners">
+          <div className="mx-auto" style={{ maxWidth: 1200, padding: '0 24px' }}>
+            <div style={{ marginBottom: 30 }}>
+              <Marquee logos={LOGOS_ROW1} direction="left" label={t.partner_row1} />
+            </div>
+            <Marquee logos={LOGOS_ROW2} direction="right" label={t.partner_row2} />
+          </div>
+        </section>
+      </div>
 
       {/* ---------- YOUR PARTNER ---------- */}
-      <section className="bg-white" style={{ padding: '80px 30px' }} aria-labelledby="value-title">
-        <div
-          className="mx-auto flex flex-wrap items-center"
-          style={{ maxWidth: 1320, gap: 64 }}
-        >
-          <Reveal style={{ flex: 1, minWidth: 280 }}>
+      <Reveal
+        as="section"
+        variants={sectionReveal}
+        className="bg-white"
+        style={{ padding: '80px 30px' }}
+        aria-labelledby="value-title"
+      >
+        <div className="mx-auto flex flex-wrap items-center" style={{ maxWidth: 1320, gap: 64 }}>
+          <div style={{ flex: 1, minWidth: 280 }}>
             <div style={{ borderRadius: 18, overflow: 'hidden', aspectRatio: '4 / 3.4' }}>
               <img
-                src={assetUrl("images/home-interior.png")}
+                src={assetUrl(content.partner.image)}
                 alt="Interior finishing"
                 className="block w-full h-full object-cover"
               />
             </div>
-          </Reveal>
+          </div>
 
-          <RevealGroup
-            className="flex flex-col"
-            style={{ flex: 1, minWidth: 280, gap: 26 }}
-            gap={0.08}
-          >
-            <RevealItem
-              as="h2"
-              id="value-title"
-              className="m-0 font-semibold text-section-title"
-            >
-              {t.value_title}
-            </RevealItem>
+          <div className="flex flex-col" style={{ flex: 1, minWidth: 280, gap: 26 }}>
+            <h2 id="value-title" className="m-0 font-semibold text-section-title">
+              {pick(content.text.partnerTitle, lang)}
+            </h2>
 
             <div className="flex flex-col" style={{ gap: 20 }}>
-              {valueProps.map((v) => (
-                <RevealItem key={v.t} style={{ borderTop: '1px solid #EAEAE8', paddingTop: 18 }}>
+              {content.text.partnerItems.map((item, i) => (
+                <div key={i} style={{ borderTop: '1px solid #EAEAE8', paddingTop: 18 }}>
                   <h3
                     className="flex items-center font-semibold"
                     style={{ margin: '0 0 5px', fontSize: 18, gap: 9 }}
                   >
                     <Check size={18} />
-                    {v.t}
+                    {pick(item.a, lang)}
                   </h3>
                   <p className="m-0 text-muted" style={{ fontSize: 15, lineHeight: 1.6 }}>
-                    {v.d}
+                    {pick(item.b, lang)}
                   </p>
-                </RevealItem>
+                </div>
               ))}
             </div>
-          </RevealGroup>
+          </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* ---------- FROM CONCEPT TO COMPLETION ---------- */}
-      <section
+      <Reveal
+        as="section"
+        variants={sectionReveal}
         className="bg-white"
         style={{ padding: '40px 30px 90px' }}
         aria-labelledby="concept-title"
       >
         <div className="mx-auto" style={{ maxWidth: 1320 }}>
-          <Reveal
-            as="h2"
+          <h2
             id="concept-title"
             className="m-0 text-center font-semibold text-section-title"
             style={{ marginBottom: 44 }}
           >
             {t.concept_title}
-          </Reveal>
+          </h2>
 
-          <RevealGroup
-            className="grid"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))',
-              gap: 20,
-            }}
-            gap={0.07}
-          >
-            {services.map((svc) => (
-              <RevealItem key={svc.slug}>
+          {homeServices.length === 0 ? (
+            <div
+              className="mx-auto flex flex-col items-center text-center"
+              style={{
+                maxWidth: 560,
+                border: '1.5px dashed #DDD9D4',
+                borderRadius: 18,
+                padding: '54px 30px',
+                gap: 12,
+              }}
+            >
+              <div
+                className="flex items-center justify-center"
+                style={{ width: 52, height: 52, borderRadius: 14, background: '#F5F5F4' }}
+              >
+                <svg
+                  width={24}
+                  height={24}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#A8A29E"
+                  strokeWidth={1.8}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+              </div>
+              <h3 className="m-0 font-semibold" style={{ fontSize: 19 }}>
+                {t.empty_svc_t}
+              </h3>
+              <p className="m-0" style={{ fontSize: 14.5, color: '#8A8580', maxWidth: 360, lineHeight: 1.55 }}>
+                {t.empty_svc_d}
+              </p>
+            </div>
+          ) : (
+            /* Centred flex grid — stays intentional at 1/2/3/many items. */
+            <div className="flex flex-wrap justify-center" style={{ gap: 20 }}>
+              {homeServices.map((svc) => (
                 <Link
-                  to={`/services/${svc.detail}`}
+                  key={svc.slug}
+                  to={`/services/${svc.slug}`}
                   className="group relative block overflow-hidden text-white hover:text-white"
-                  style={{ aspectRatio: '1.42', borderRadius: 16 }}
+                  style={{ flex: '1 1 340px', maxWidth: 432, aspectRatio: '1.42', borderRadius: 16 }}
                 >
                   <div
                     className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
@@ -274,38 +326,35 @@ export default function Home() {
                     </span>
                   </div>
                 </Link>
-              </RevealItem>
-            ))}
-          </RevealGroup>
+              ))}
+            </div>
+          )}
         </div>
-      </section>
+      </Reveal>
 
       {/* ---------- FROM PLANNING TO PERFECTION ---------- */}
-      <section
+      <Reveal
+        as="section"
+        variants={sectionReveal}
         className="bg-surface"
         style={{ padding: '92px 30px' }}
         aria-labelledby="planning-title"
       >
         <div className="mx-auto" style={{ maxWidth: 1180 }}>
-          <Reveal
-            as="h2"
+          <h2
             id="planning-title"
             className="m-0 text-center font-semibold text-section-title"
             style={{ marginBottom: 60 }}
           >
             {t.planning_title}
-          </Reveal>
+          </h2>
 
-          <RevealGroup
+          <div
             className="relative grid"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(230px, 100%), 1fr))',
-              gap: 32,
-            }}
-            gap={0.1}
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(230px, 100%), 1fr))', gap: 32 }}
           >
             {planning.map((p) => (
-              <RevealItem key={p.n} className="flex flex-col items-start" style={{ gap: 16 }}>
+              <div key={p.n} className="flex flex-col items-start" style={{ gap: 16 }}>
                 <div
                   className="flex items-center justify-center bg-orange text-ink font-bold"
                   style={{ width: 34, height: 34, borderRadius: '50%', fontSize: 15 }}
@@ -318,118 +367,139 @@ export default function Home() {
                 <p className="m-0 text-muted" style={{ fontSize: 14, lineHeight: 1.6 }}>
                   {p.d}
                 </p>
-              </RevealItem>
+              </div>
             ))}
-          </RevealGroup>
+          </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* ---------- SEE THE SPACES ---------- */}
-      <section className="bg-ink" style={{ padding: '92px 30px' }} aria-labelledby="spaces-title">
+      <Reveal
+        as="section"
+        variants={sectionReveal}
+        className="bg-ink"
+        style={{ padding: '92px 30px' }}
+        aria-labelledby="spaces-title"
+      >
         <div className="mx-auto" style={{ maxWidth: 1320 }}>
-          <Reveal
-            as="h2"
+          <h2
             id="spaces-title"
             className="m-0 text-center font-semibold text-white text-section-title"
             style={{ marginBottom: 48 }}
           >
             {t.spaces_title}
-          </Reveal>
+          </h2>
 
-          <RevealGroup
-            className="grid"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))',
-              gap: 20,
-            }}
-            gap={0.07}
-          >
-            {projects.map((sp) => (
-              <RevealItem key={sp.slug}>
-                <Link
-                  to={`/projects/${sp.slug}`}
-                  className="group relative block overflow-hidden"
-                  style={{ aspectRatio: '1.55', borderRadius: 14 }}
-                >
-                  <div
-                    className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
-                    style={{
-                      backgroundImage: bgImage(sp.space_img),
-                      backgroundSize: 'cover',
-                      backgroundPosition: '50% 50%',
-                    }}
-                  />
-                  <div className="absolute inset-0" style={{ background: gradients.spaceCard }} />
-                  <span
-                    className="absolute inline-flex items-center text-white font-medium"
-                    style={{
-                      left: 16,
-                      bottom: 16,
-                      gap: 7,
-                      background: 'rgba(22,12,0,0.72)',
-                      backdropFilter: 'blur(6px)',
-                      fontSize: 13,
-                      padding: '7px 12px',
-                      borderRadius: 8,
-                    }}
-                  >
-                    <Pin size={13} />
-                    {SPACE_LABELS[sp.slug] ?? sp.loc}
-                  </span>
-                </Link>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-
-          <Reveal className="flex justify-center" style={{ marginTop: 40 }}>
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={tapPress}>
-              <Link
-                to="/projects"
-                className="inline-flex items-center bg-orange text-ink font-semibold transition-colors duration-200 hover:bg-orange-hover hover:text-ink"
-                style={{ gap: 9, fontSize: 15, padding: '13px 24px', borderRadius: 11 }}
+          {projects.length === 0 ? (
+            <div
+              className="mx-auto flex flex-col items-center text-center"
+              style={{
+                maxWidth: 560,
+                border: '1.5px dashed rgba(255,255,255,0.18)',
+                borderRadius: 18,
+                padding: '54px 30px',
+                gap: 12,
+              }}
+            >
+              <div
+                className="flex items-center justify-center"
+                style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(255,255,255,0.06)' }}
               >
-                {t.view_all}
-                <ArrowRight size={16} />
-              </Link>
-            </motion.div>
-          </Reveal>
+                <Pin size={24} strokeWidth={1.8} />
+              </div>
+              <h3 className="m-0 font-semibold text-white" style={{ fontSize: 19 }}>
+                {t.empty_proj_t}
+              </h3>
+              <p
+                className="m-0"
+                style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.6)', maxWidth: 360, lineHeight: 1.55 }}
+              >
+                {t.empty_proj_d}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Centred flex grid — same intent rules as the services grid. */}
+              <div className="flex flex-wrap justify-center" style={{ gap: 20 }}>
+                {projects.map((sp) => (
+                  <Link
+                    key={sp.slug}
+                    to={`/projects/${sp.slug}`}
+                    className="group relative block overflow-hidden"
+                    style={{ flex: '1 1 340px', maxWidth: 432, aspectRatio: '1.55', borderRadius: 14 }}
+                  >
+                    <div
+                      className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
+                      style={{
+                        backgroundImage: bgImage(sp.space_img || coverSrc(sp)),
+                        backgroundSize: 'cover',
+                        backgroundPosition: '50% 50%',
+                      }}
+                    />
+                    <div className="absolute inset-0" style={{ background: gradients.spaceCard }} />
+                    <span
+                      className="absolute inline-flex items-center text-white font-medium"
+                      style={{
+                        left: 16,
+                        bottom: 16,
+                        gap: 7,
+                        background: 'rgba(22,12,0,0.72)',
+                        backdropFilter: 'blur(6px)',
+                        fontSize: 13,
+                        padding: '7px 12px',
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Pin size={13} />
+                      {SPACE_LABELS[sp.slug] ?? sp.loc}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="flex justify-center" style={{ marginTop: 40 }}>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={tapPress}>
+                  <Link
+                    to="/projects"
+                    className="inline-flex items-center bg-orange text-ink font-semibold transition-colors duration-200 hover:bg-orange-hover hover:text-ink"
+                    style={{ gap: 9, fontSize: 15, padding: '13px 24px', borderRadius: 11 }}
+                  >
+                    {t.view_all}
+                    <ArrowRight size={16} />
+                  </Link>
+                </motion.div>
+              </div>
+            </>
+          )}
         </div>
-      </section>
+      </Reveal>
 
       {/* ---------- RELIABLE PARTNER ---------- */}
-      <section
+      <Reveal
+        as="section"
+        variants={sectionReveal}
         className="bg-white"
         style={{ padding: '92px 30px' }}
         aria-labelledby="reliable-title"
       >
         <div className="mx-auto" style={{ maxWidth: 1100 }}>
-          <Reveal
-            as="h2"
+          <h2
             id="reliable-title"
             className="m-0 text-center font-semibold text-section-title"
             style={{ marginBottom: 48 }}
           >
             {t.reliable_title}
-          </Reveal>
+          </h2>
 
-          <RevealGroup
+          <div
             className="grid"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(400px, 100%), 1fr))',
-              gap: 18,
-            }}
-            gap={0.08}
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(400px, 100%), 1fr))', gap: 18 }}
           >
             {reliable.map(({ Icon, t: title, d }) => (
-              <RevealItem
+              <div
                 key={title}
                 className="flex flex-col bg-surface"
-                style={{
-                  border: '1px solid #EAEAE8',
-                  borderRadius: 16,
-                  padding: 30,
-                  gap: 14,
-                }}
+                style={{ border: '1px solid #EAEAE8', borderRadius: 16, padding: 30, gap: 14 }}
               >
                 <Icon size={30} />
                 <h3 className="m-0 font-semibold" style={{ fontSize: 19 }}>
@@ -438,14 +508,37 @@ export default function Home() {
                 <p className="m-0 text-muted" style={{ fontSize: 15, lineHeight: 1.6 }}>
                   {d}
                 </p>
-              </RevealItem>
+              </div>
             ))}
-          </RevealGroup>
+          </div>
         </div>
-      </section>
+      </Reveal>
 
-      <FaqSection />
-      <CtaSection />
+      <Reveal variants={sectionReveal}>
+        <FaqSection />
+      </Reveal>
+      <Reveal variants={sectionReveal}>
+        <CtaSection
+          title={pick(content.text.ctaTitle, lang)}
+          sub={pick(content.text.ctaSub, lang)}
+          btn={pick(content.text.ctaBtn, lang)}
+          image={content.cta.image}
+        />
+      </Reveal>
+
+      {/* ---------- OVERLAYS ---------- */}
+      <AnimatePresence>
+        {booking && <BookingModal onClose={() => setBooking(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {consult && (
+          <ConsultationModal
+            onClose={() => setConsult(false)}
+            initialEmail={heroEmail}
+            initialPhone={heroPhone}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   IconWarning,
 } from './components/ui';
 import DashboardView from './views/DashboardView';
+import HomeView from './views/HomeView';
 import ProjectsView from './views/ProjectsView';
 import ServicesView from './views/ServicesView';
 import AvailabilityView from './views/AvailabilityView';
@@ -54,10 +55,22 @@ const STYLE = `
   }
 `;
 
-type ViewKey = 'dashboard' | 'projects' | 'services' | 'availability' | 'meetings' | 'settings';
+type ViewKey =
+  | 'dashboard'
+  | 'home'
+  | 'projects'
+  | 'services'
+  | 'availability'
+  | 'meetings'
+  | 'settings';
 
 const VIEW_META: Record<ViewKey, { title: string; subtitle: string; search?: string }> = {
   dashboard: { title: 'Dashboard', subtitle: 'Site traffic and recent activity' },
+  home: {
+    title: 'Home page',
+    subtitle: 'Edit the public home page — section by section, with a live preview',
+    search: 'Search…',
+  },
   projects: {
     title: 'Projects',
     subtitle: 'Manage your portfolio',
@@ -89,6 +102,13 @@ const NavIconDashboard = ({ stroke }: { stroke: string }) => (
   </svg>
 );
 
+const NavIconHome = ({ stroke }: { stroke: string }) => (
+  <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </svg>
+);
+
 const NavIconMeetings = ({ stroke }: { stroke: string }) => (
   <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -111,7 +131,7 @@ export default function AdminPanel() {
 
   const view: ViewKey = useMemo(() => {
     const seg = location.pathname.replace(/^\/admin\/?/, '').split('/')[0];
-    return (['projects', 'services', 'availability', 'meetings', 'settings'].includes(seg)
+    return (['home', 'projects', 'services', 'availability', 'meetings', 'settings'].includes(seg)
       ? seg
       : 'dashboard') as ViewKey;
   }, [location.pathname]);
@@ -348,6 +368,7 @@ export default function AdminPanel() {
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {navItem('dashboard', 'Dashboard', (s) => <NavIconDashboard stroke={s} />)}
+            {navItem('home', 'Home page', (s) => <NavIconHome stroke={s} />)}
             {navItem('projects', 'Projects', (s) => (
               <IconProjects stroke={s} />
             ))}
@@ -636,6 +657,7 @@ export default function AdminPanel() {
             >
               <Routes>
                 <Route index element={<DashboardView />} />
+                <Route path="home" element={<HomeView />} />
                 <Route path="projects" element={<ProjectsView />} />
                 <Route path="services" element={<ServicesView />} />
                 <Route path="availability" element={<AvailabilityView />} />

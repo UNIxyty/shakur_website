@@ -11,6 +11,10 @@ services:
         #   docker compose up -d --build
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        # 'live' | 'coming_soon' — the coming-soon gate in App.tsx.
+        VITE_SITE_MODE: ${VITE_SITE_MODE:-live}
+        # Canonical origin for index.html canonical/OG tags.
+        VITE_PUBLIC_BASE_URL: ${VITE_PUBLIC_BASE_URL:-}
     image: shakur-web
     container_name: shakur-web
     restart: unless-stopped
@@ -21,6 +25,10 @@ services:
     # `curl http://127.0.0.1:3000` still works for debugging on the box.
     ports:
       - '127.0.0.1:3000:3000'
+    volumes:
+      # Home-CMS uploads, written by the api service — nginx serves them
+      # read-only at /media/ (see nginx.conf).
+      - media-uploads:/srv/media:ro
     depends_on:
       api:
         # nginx resolves the api upstream lazily (resolver + variable in
@@ -46,8 +54,17 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM: ${RESEND_FROM:-}
+      # PUBLIC_BASE_URL wins; PUBLIC_URL is the pre-v3 name, still passed so an
+      # older .env keeps working (see server/lib/shared.js).
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       PUBLIC_URL: ${PUBLIC_URL:-}
       SUPPORT_EMAIL: ${SUPPORT_EMAIL:-}
+      MEDIA_DIR: /data/media
+    volumes:
+      # Home-CMS uploads (POST /api/media). Writable here; `web` mounts the
+      # same volume read-only. Survives rebuilds; `docker volume rm
+      # shakur_website_media-uploads` wipes it (Supabase keeps the replicas).
+      - media-uploads:/data/media
     expose:
       - '8787'
     healthcheck:
@@ -78,3 +95,7 @@ services:
         # Wait for nginx to answer its healthcheck before advertising the origin,
         # so the tunnel never briefly serves 502s on a fresh deploy.
         condition: service_healthy
+
+volumes:
+  # Local-first Home-CMS uploads: api writes /data/media, web serves /srv/media.
+  media-uploads:

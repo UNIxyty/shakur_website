@@ -26,6 +26,9 @@ const CAPABILITIES_FORMAT = {
       properties: {
         items: {
           type: 'array',
+          // v3: 1–6 cards — only as many as the brief genuinely needs.
+          minItems: 1,
+          maxItems: 6,
           items: {
             type: 'object',
             additionalProperties: false,
@@ -34,7 +37,7 @@ const CAPABILITIES_FORMAT = {
               number: { type: 'string' },
               title: L10N_SCHEMA,
               description: L10N_SCHEMA,
-              bullets: { type: 'array', items: L10N_SCHEMA },
+              bullets: { type: 'array', minItems: 2, maxItems: 4, items: L10N_SCHEMA },
             },
           },
         },
@@ -51,6 +54,10 @@ const SYSTEM_PROMPT = [
   'Always produce all three languages: English (en), Latvian (lv), Russian (ru).',
   'Translate naturally and idiomatically — not word-for-word — using correct',
   'construction terminology in each language.',
+  "The admin's note may be written in any language — detect it, understand it, and",
+  'still return all three languages (en, lv, ru).',
+  'Write ONLY about the work the note describes; never pad with unrelated trades',
+  '(a drywall brief must not produce masonry copy).',
 ].join(' ');
 
 const isL10n = (v) =>
@@ -62,7 +69,8 @@ const isL10n = (v) =>
   (v.en.trim() || v.lv.trim() || v.ru.trim());
 
 function validateCapabilities(parsed) {
-  if (!parsed || !Array.isArray(parsed.items) || parsed.items.length !== 4) return false;
+  if (!parsed || !Array.isArray(parsed.items)) return false;
+  if (parsed.items.length < 1 || parsed.items.length > 6) return false;
   return parsed.items.every(
     (item, i) =>
       item &&
@@ -103,20 +111,26 @@ export async function handleAiWrite(req, res) {
   }
 
   const isCaps = fieldType === 'capabilities';
+  // v3: describe-driven — the copy is generated FROM the brief, not rewritten
+  // from the field's current contents (`existing` is context only).
   const guidance = {
-    title: 'Write a short page/card title (3–6 words). No trailing punctuation.',
-    summary: 'Write a one-sentence card summary (max ~20 words).',
+    title:
+      'Write a short page/card title (3–6 words) drawn from the brief below. ' +
+      'No trailing punctuation.',
+    summary: 'Write a one-sentence card summary (max ~20 words) drawn from the brief below.',
     description:
-      'Write body copy of 2–3 short paragraphs, separated by a blank line (\\n\\n).',
+      'Write body copy of 2–3 short paragraphs drawn from the brief below, ' +
+      'separated by a blank line (\\n\\n).',
     capabilities:
-      'Write EXACTLY 4 capability cards, numbered "01".."04". Each has a short title ' +
-      '(2–4 words), a one-line description, and exactly 3 short bullet points.',
+      'Write 1 to 6 capability cards — only as many as the content genuinely needs — ' +
+      'numbered "01", "02", … Each has a short title (2–4 words), a one-line ' +
+      'description, and 2–4 short bullet points.',
   }[fieldType];
 
   const user = [
     `Field: ${fieldType}. ${guidance}`,
-    existing ? `Existing copy for reference (improve on it, keep the intent):\n${existing}` : '',
-    `Rough note from the admin:\n${note}`,
+    existing ? `Current copy, for context only — the brief drives the result:\n${existing}` : '',
+    `Describe brief from the admin:\n${note}`,
   ]
     .filter(Boolean)
     .join('\n\n');

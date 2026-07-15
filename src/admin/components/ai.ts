@@ -44,72 +44,108 @@ function aiMockText(field: AiTextField, note: string): L10n {
   return D[field];
 }
 
-/** Sample capability set for the mock path (approved capabilities extension). */
-function aiMockCapabilities(): AiCapabilityItem[] {
-  const mk = (
-    number: string,
-    title: L10n,
-    description: L10n,
-    bullets: L10n[]
-  ): AiCapabilityItem => ({ number, title, description, bullets });
-  return [
-    mk(
-      '01',
-      { en: 'Survey & planning', lv: 'Apsekošana un plānošana', ru: 'Обследование и планирование' },
-      {
-        en: 'A site survey and a fixed, itemised quote before any work starts.',
-        lv: 'Objekta apsekošana un fiksēta, detalizēta tāme pirms darbu sākuma.',
-        ru: 'Обследование объекта и фиксированная детальная смета до начала работ.',
-      },
-      [
-        { en: 'On-site measurements', lv: 'Mērījumi objektā', ru: 'Замеры на объекте' },
-        { en: 'Itemised fixed quote', lv: 'Detalizēta fiksēta tāme', ru: 'Детальная фиксированная смета' },
-        { en: 'Clear delivery schedule', lv: 'Skaidrs darbu grafiks', ru: 'Чёткий график работ' },
-      ]
-    ),
-    mk(
-      '02',
-      { en: 'Structure & framing', lv: 'Konstrukcijas un karkass', ru: 'Конструкции и каркас' },
-      {
-        en: 'Framing, boarding, and structural works built to exact tolerances.',
-        lv: 'Karkass, apšuvums un konstruktīvie darbi ar precīzām pielaidēm.',
-        ru: 'Каркас, обшивка и конструктивные работы с точными допусками.',
-      },
-      [
-        { en: 'Certified crews', lv: 'Sertificētas brigādes', ru: 'Сертифицированные бригады' },
-        { en: 'Engineer-drawing compliance', lv: 'Atbilstība rasējumiem', ru: 'Соответствие чертежам' },
-        { en: 'Stage-by-stage documentation', lv: 'Dokumentācija pa posmiem', ru: 'Поэтапная документация' },
-      ]
-    ),
-    mk(
-      '03',
-      { en: 'Finishing', lv: 'Apdare', ru: 'Отделка' },
-      {
-        en: 'Jointing, surfaces, and detailing left paint-ready and tidy.',
-        lv: 'Šuvošana, virsmas un detaļas — gatavas krāsošanai un sakoptas.',
-        ru: 'Швы, поверхности и детали — под покраску и в полном порядке.',
-      },
-      [
-        { en: 'Paint-ready finish', lv: 'Krāsošanai gatava apdare', ru: 'Отделка под покраску' },
-        { en: 'Protected adjacent surfaces', lv: 'Aizsargātas blakus virsmas', ru: 'Защита смежных поверхностей' },
-        { en: 'Daily site clean-up', lv: 'Ikdienas sakopšana', ru: 'Ежедневная уборка' },
-      ]
-    ),
-    mk(
-      '04',
-      { en: 'Handover & aftercare', lv: 'Nodošana un garantija', ru: 'Сдача и гарантия' },
-      {
-        en: 'A documented handover, snag-free, with warranty-backed aftercare.',
-        lv: 'Dokumentēta nodošana bez defektiem ar garantijas atbalstu.',
-        ru: 'Документированная сдача без недоделок с гарантийной поддержкой.',
-      },
-      [
-        { en: 'Snag-list walkthrough', lv: 'Defektu saraksta pārbaude', ru: 'Проверка по чек-листу' },
-        { en: 'Building-control documents', lv: 'Būvvaldes dokumentācija', ru: 'Документы для стройнадзора' },
-        { en: 'Workmanship warranty', lv: 'Darbu garantija', ru: 'Гарантия на работы' },
-      ]
-    ),
-  ];
+/**
+ * Sample capability pool for the mock path — the design's _capMock pool ported
+ * verbatim (EN) and translated LV/RU in the style of src/i18n.ts. The design
+ * derives a variable card count (1–6) from the brief's length.
+ */
+const CAP_MOCK_POOL: Omit<AiCapabilityItem, 'number'>[] = [
+  {
+    title: { en: 'Framing & Structure', lv: 'Karkass un konstrukcija', ru: 'Каркас и конструкция' },
+    description: {
+      en: 'Precise metal-stud framing set out to your layout and levelled to tight tolerances.',
+      lv: 'Precīzs metāla profilu karkass, izlikts pēc jūsu plānojuma un izlīmeņots ar stingrām pielaidēm.',
+      ru: 'Точный каркас из металлопрофиля, размеченный по вашей планировке и выровненный с жёсткими допусками.',
+    },
+    bullets: [
+      { en: 'Set-out to architect drawings', lv: 'Izlikšana pēc arhitekta rasējumiem', ru: 'Разметка по чертежам архитектора' },
+      { en: 'Laser-levelled studwork', lv: 'Ar lāzeri līmeņots karkass', ru: 'Лазерное выравнивание каркаса' },
+      { en: 'Openings and service voids formed', lv: 'Izveidotas ailas un komunikāciju šahtas', ru: 'Проёмы и ниши для коммуникаций' },
+    ],
+  },
+  {
+    title: { en: 'Boarding & Jointing', lv: 'Apšuvums un šuvošana', ru: 'Обшивка и швы' },
+    description: {
+      en: 'Plasterboard fixed, taped and jointed to a clean, paint-ready standard.',
+      lv: 'Ģipškartons piestiprināts, šuvots un špaktelēts līdz tīram, krāsošanai gatavam standartam.',
+      ru: 'Гипсокартон закреплён, швы проклеены и зашпаклёваны до чистого стандарта под покраску.',
+    },
+    bullets: [
+      { en: 'Level-4 taping and jointing', lv: '4. līmeņa šuvošana un špaktelēšana', ru: 'Шпаклёвка и швы 4-го уровня' },
+      { en: 'Corner beads and stopping', lv: 'Stūru profili un apdare', ru: 'Угловые профили и заделка' },
+      { en: 'Dust-controlled sanding', lv: 'Slīpēšana ar putekļu kontroli', ru: 'Шлифовка с пылеудалением' },
+    ],
+  },
+  {
+    title: {
+      en: 'Acoustic & Fire Systems',
+      lv: 'Akustiskās un ugunsdrošās sistēmas',
+      ru: 'Акустические и противопожарные системы',
+    },
+    description: {
+      en: 'Rated partition build-ups installed to specification and certified.',
+      lv: 'Sertificētas starpsienu sistēmas, uzstādītas atbilstoši specifikācijai.',
+      ru: 'Сертифицированные перегородки, смонтированные по спецификации.',
+    },
+    bullets: [
+      { en: 'Acoustic insulation infill', lv: 'Akustiskās izolācijas pildījums', ru: 'Акустическая изоляция' },
+      { en: 'Fire-rated board systems', lv: 'Ugunsdrošas plākšņu sistēmas', ru: 'Огнестойкие плитные системы' },
+      { en: 'Compliance documentation', lv: 'Atbilstības dokumentācija', ru: 'Документация о соответствии' },
+    ],
+  },
+  {
+    title: { en: 'Finishing & Handover', lv: 'Apdare un nodošana', ru: 'Отделка и сдача' },
+    description: {
+      en: 'Surfaces primed and inspected, site cleaned and handed over on schedule.',
+      lv: 'Virsmas gruntētas un pārbaudītas, objekts sakopts un nodots laikā.',
+      ru: 'Поверхности загрунтованы и проверены, объект убран и сдан в срок.',
+    },
+    bullets: [
+      { en: 'Priming and snag review', lv: 'Gruntēšana un defektu pārbaude', ru: 'Грунтовка и проверка недоделок' },
+      { en: 'Coordination with other trades', lv: 'Saskaņošana ar citiem darbu veicējiem', ru: 'Координация со смежниками' },
+      { en: 'On-time, clean handover', lv: 'Savlaicīga, tīra nodošana', ru: 'Своевременная чистая сдача' },
+    ],
+  },
+  {
+    title: { en: 'Site Management', lv: 'Būvdarbu vadība', ru: 'Управление объектом' },
+    description: {
+      en: 'Supervision and full journal completion across the works package.',
+      lv: 'Uzraudzība un pilnīga būvdarbu žurnāla aizpildīšana visā darbu apjomā.',
+      ru: 'Надзор и полное ведение журнала работ по всему пакету.',
+    },
+    bullets: [
+      { en: 'Daily site supervision', lv: 'Ikdienas objekta uzraudzība', ru: 'Ежедневный контроль на объекте' },
+      { en: '98% project-journal completion', lv: '98% projektu žurnāla aizpildīšana', ru: '98% заполнение журнала работ' },
+      { en: 'Health & safety compliance', lv: 'Darba drošības atbilstība', ru: 'Соблюдение охраны труда' },
+    ],
+  },
+  {
+    title: { en: 'Materials & Sourcing', lv: 'Materiāli un piegāde', ru: 'Материалы и снабжение' },
+    description: {
+      en: 'Quality-graded materials sourced and delivered to programme.',
+      lv: 'Kvalitatīvi materiāli, sagādāti un piegādāti atbilstoši grafikam.',
+      ru: 'Качественные материалы, закупленные и поставленные по графику.',
+    },
+    bullets: [
+      { en: 'Certified board and framing', lv: 'Sertificētas plāksnes un profili', ru: 'Сертифицированные плиты и профили' },
+      { en: 'Just-in-time delivery', lv: 'Piegāde īstajā brīdī', ru: 'Поставка точно в срок' },
+      { en: 'Waste sorted and minimised', lv: 'Šķiroti un samazināti atkritumi', ru: 'Сортировка и минимизация отходов' },
+    ],
+  },
+];
+
+/** Design _capMock: 1–6 cards, count derived from the brief's word count. */
+function aiMockCapabilities(note: string): AiCapabilityItem[] {
+  const words = (note || '').split(/\s+/).filter(Boolean).length;
+  const n = Math.min(6, Math.max(1, Math.round(words / 7) || 3));
+  return JSON.parse(
+    JSON.stringify(
+      CAP_MOCK_POOL.slice(0, n).map((c, i) => ({
+        ...c,
+        number: String(i + 1).padStart(2, '0'),
+      }))
+    )
+  ) as AiCapabilityItem[];
 }
 
 function isL10nShape(v: unknown): v is L10n {
@@ -162,7 +198,11 @@ export async function aiWriteText(
   }
 }
 
-/** Capabilities/scope: resolves 4 items filled in all three languages. */
+/**
+ * Capabilities/scope: resolves 1–6 cards filled in all three languages
+ * (v3 describe-driven contract; `note` is the "Scope of work" brief).
+ * Numbering is re-normalised 01..NN client-side; bullets are capped at 4.
+ */
 export async function aiWriteCapabilities(note: string): Promise<Capability[]> {
   let items: AiCapabilityItem[];
   try {
@@ -180,13 +220,13 @@ export async function aiWriteCapabilities(note: string): Promise<Capability[]> {
     if (!isCapabilityItems(out)) throw new Error('ai/write bad shape');
     items = out.items;
   } catch {
-    await delay(1100);
-    items = aiMockCapabilities();
+    await delay(1300);
+    items = aiMockCapabilities(note);
   }
-  return items.slice(0, 4).map((it, i) => ({
-    number: it.number || String(i + 1).padStart(2, '0'),
+  return items.slice(0, 6).map((it, i) => ({
+    number: String(i + 1).padStart(2, '0'),
     title: it.title,
     description: it.description,
-    bullets: it.bullets.filter(isL10nShape),
+    bullets: it.bullets.filter(isL10nShape).slice(0, 4),
   }));
 }
