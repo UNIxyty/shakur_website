@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo, useRef, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import type { ReactNode, ElementType } from 'react';
 import { reveal, stagger, viewportOnce } from '../motion';
@@ -59,6 +59,16 @@ type GroupProps = Common & {
 };
 
 /**
+ * Framer-motion only propagates variants to children that exist when the
+ * parent's animation state CHANGES. A `RevealItem` that mounts after the
+ * group's once-only `whileInView` has already fired (async data replacing the
+ * static fallback, "Load more") inherits `initial="hidden"` and is never
+ * animated — invisible but still interactive. The group exposes whether its
+ * reveal already fired so late-mounting items can drive their own reveal.
+ */
+const GroupRevealedContext = createContext<(() => boolean) | null>(null);
+
+/**
  * Staggers direct children that are `<RevealItem>`s (or any motion element using
  * the `hidden`/`visible` variant names).
  */
@@ -72,24 +82,49 @@ export function RevealGroup({
   ...rest
 }: GroupProps) {
   const Comp = useMotionComponent(as as ElementType);
+  const revealedRef = useRef(false);
+  const readRevealed = useRef(() => revealedRef.current).current;
   return (
-    <Comp
-      className={className}
-      style={style}
-      initial="hidden"
-      whileInView="visible"
-      viewport={viewportOnce}
-      variants={stagger(gap, delayChildren)}
-      {...rest}
-    >
-      {children}
-    </Comp>
+    <GroupRevealedContext.Provider value={readRevealed}>
+      <Comp
+        className={className}
+        style={style}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewportOnce}
+        variants={stagger(gap, delayChildren)}
+        onViewportEnter={() => {
+          revealedRef.current = true;
+        }}
+        {...rest}
+      >
+        {children}
+      </Comp>
+    </GroupRevealedContext.Provider>
   );
 }
 
 /** A child of <RevealGroup>. Inherits the parent's stagger timing. */
 export function RevealItem({ children, className, style, as = 'div', variants, ...rest }: Common) {
   const Comp = useMotionComponent(as as ElementType);
+  const groupRevealed = useContext(GroupRevealedContext);
+  // Captured once at mount: did this item miss the group's reveal?
+  const [mountedLate] = useState(() => (groupRevealed ? groupRevealed() : false));
+  if (mountedLate) {
+    return (
+      <Comp
+        className={className}
+        style={style}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewportOnce}
+        variants={variants ?? reveal}
+        {...rest}
+      >
+        {children}
+      </Comp>
+    );
+  }
   return (
     <Comp className={className} style={style} variants={variants ?? reveal} {...rest}>
       {children}
