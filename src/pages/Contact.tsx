@@ -6,6 +6,7 @@ import { Check, CheckSolid, ChevronDown, Phone, Pin } from '../components/icons'
 import { Reveal, RevealGroup, RevealItem } from '../components/Reveal';
 import CtaSection from '../components/CtaSection';
 import BookingModal from '../components/BookingModal';
+import ConsultationModal from '../components/ConsultationModal';
 
 const inputStyle: React.CSSProperties = {
   border: '1px solid #E7E5E4',
@@ -19,6 +20,7 @@ export default function Contact() {
   const { t } = useLang();
   const [purposeOpen, setPurposeOpen] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [consult, setConsult] = useState(false);
 
   // Every field is controlled so typed data survives any re-render; the
   // purpose dropdown only ever writes its own value (v4 contract §5).
@@ -186,6 +188,8 @@ export default function Contact() {
               <div className="flex" style={{ gap: 14, marginTop: 4 }}>
                 <div className="flex flex-1 flex-col items-center" style={{ gap: 5 }}>
                   <motion.button
+                    type="button"
+                    onClick={() => setConsult(true)}
                     whileTap={{ scale: 0.98 }}
                     className="w-full cursor-pointer border-0 bg-orange text-ink font-semibold transition-colors hover:bg-orange-hover"
                     style={{ fontSize: 15, padding: 14, borderRadius: 10 }}
@@ -304,6 +308,19 @@ export default function Contact() {
 
       <AnimatePresence>
         {booking && <BookingModal onClose={() => setBooking(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {consult && (
+          <ConsultationModal
+            onClose={() => setConsult(false)}
+            initialName={name}
+            initialEmail={email}
+            initialPhone={phone}
+            initialMessage={
+              purpose ? (message ? `«${purpose}» — ${message}` : purpose) : message
+            }
+          />
+        )}
       </AnimatePresence>
     </div>
   );

@@ -19,6 +19,7 @@ import {
 } from './components/ui';
 import DashboardView from './views/DashboardView';
 import HomeView from './views/HomeView';
+import TextsView from './views/TextsView';
 import ProjectsView from './views/ProjectsView';
 import ServicesView from './views/ServicesView';
 import AvailabilityView from './views/AvailabilityView';
@@ -68,6 +69,7 @@ const STYLE = `
 type ViewKey =
   | 'dashboard'
   | 'home'
+  | 'texts'
   | 'projects'
   | 'services'
   | 'availability'
@@ -80,6 +82,11 @@ const VIEW_META: Record<ViewKey, { title: string; subtitle: string; search?: str
     title: 'Home page',
     subtitle: 'Edit the public home page — section by section, with a live preview',
     search: 'Search…',
+  },
+  texts: {
+    title: 'Website text',
+    subtitle: 'Every word on the public site — EN · LV · RU',
+    search: 'Search texts, sections or keys…',
   },
   projects: {
     title: 'Projects',
@@ -119,6 +126,15 @@ const NavIconHome = ({ stroke }: { stroke: string }) => (
   </svg>
 );
 
+/** ShakurTextManager.dc.html sidebar icon — text lines ("T" over a rule). */
+const NavIconTexts = ({ stroke }: { stroke: string }) => (
+  <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2" />
+    <line x1="9" y1="20" x2="15" y2="20" />
+    <line x1="12" y1="4" x2="12" y2="20" />
+  </svg>
+);
+
 const NavIconMeetings = ({ stroke }: { stroke: string }) => (
   <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -141,7 +157,7 @@ export default function AdminPanel() {
 
   const view: ViewKey = useMemo(() => {
     const seg = location.pathname.replace(/^\/admin\/?/, '').split('/')[0];
-    return (['home', 'projects', 'services', 'availability', 'meetings', 'settings'].includes(seg)
+    return (['home', 'texts', 'projects', 'services', 'availability', 'meetings', 'settings'].includes(seg)
       ? seg
       : 'dashboard') as ViewKey;
   }, [location.pathname]);
@@ -403,6 +419,7 @@ export default function AdminPanel() {
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {navItem('dashboard', 'Dashboard', (s) => <NavIconDashboard stroke={s} />)}
             {navItem('home', 'Home page', (s) => <NavIconHome stroke={s} />)}
+            {navItem('texts', 'Website text', (s) => <NavIconTexts stroke={s} />)}
             {navItem('projects', 'Projects', (s) => (
               <IconProjects stroke={s} />
             ))}
@@ -740,6 +757,7 @@ export default function AdminPanel() {
               <Routes>
                 <Route index element={<DashboardView />} />
                 <Route path="home" element={<HomeView />} />
+                <Route path="texts" element={<TextsView />} />
                 <Route path="projects" element={<ProjectsView />} />
                 <Route path="services" element={<ServicesView />} />
                 <Route path="availability" element={<AvailabilityView />} />

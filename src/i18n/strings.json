@@ -1169,6 +1169,11 @@
       "lv": "Aizsargājiet un pārveidojiet savu māju ar augstas kvalitātes apdari un ģipškartona pakalpojumiem.",
       "ru": "Защитите и преобразите ваш дом с помощью качественной отделки и услуг по гипсокартону."
     },
+    "foot_registered": {
+      "en": "Registered in Latvia",
+      "lv": "Reģistrēts Latvijā",
+      "ru": "Зарегистрировано в Латвии"
+    },
     "foot_nav": {
       "en": "Navigation",
       "lv": "Navigācija",

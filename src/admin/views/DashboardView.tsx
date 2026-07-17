@@ -1,38 +1,329 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
+import { pick } from '../../lib/db';
+import type { L10n } from '../../lib/db';
 import { useAdminShell } from '../components/context';
-import { FONT, IconPlus, IconServices } from '../components/ui';
+import { FONT, IconCalendar, IconPlus, IconProjects, IconServices, fmtDate } from '../components/ui';
 
 /**
- * Dashboard overview from ShakurDashboard.dc.html — stat cards, the visitor
- * chart (inline SVG matching the Chart.js orange gradient line; the data is
- * the design's demo generator, no analytics backend exists), top pages,
- * recent activity, and quick actions into the other panel views.
+ * Dashboard overview — the ShakurDashboard.dc.html visual grammar (stat cards,
+ * the orange area chart, activity list, quick actions) driven by real data:
+ * live counts from projects / services / meetings / consultation_requests, a
+ * per-day "requests" series (new meetings + consultation requests combined),
+ * and a merged recent-activity feed. The design's visitor analytics (trend
+ * pills, Top Pages) are placeholder data we do not have, so they are
+ * intentionally absent rather than fabricated.
  */
 
-type Range = 7 | 30 | 90;
+export type Range = 7 | 30 | 90;
 
-/** Ported verbatim from the design's dataFor(). */
-function dataFor(range: Range): { labels: string[]; values: number[] } {
-  const step = range === 90 ? 3 : 1;
-  const labels: string[] = [];
-  const values: number[] = [];
-  const today = new Date();
-  const base = range === 7 ? 72 : range === 30 ? 60 : 54;
-  const wob = range === 7 ? 1.4 : range === 30 ? 4 : 9;
-  for (let i = range - 1; i >= 0; i -= step) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
-    const v = Math.round(base + 26 * Math.sin(i / wob) + (i % 7 === 0 ? 22 : 0) + (range - i) * 0.28);
-    values.push(Math.max(18, v));
-  }
-  return { labels, values };
+/* ------------------------------------------------------------------ */
+/* Data layer — pure and injectable so unit tests can mock the client  */
+/* ------------------------------------------------------------------ */
+
+type DbErr = { code?: string; message?: string } | null | undefined;
+
+export type DashResult = {
+  count?: number | null;
+  data?: unknown[] | null;
+  error?: DbErr;
+};
+
+/** The subset of the PostgREST filter builder the dashboard uses. */
+export interface DashFilter extends PromiseLike<DashResult> {
+  eq(column: string, value: unknown): DashFilter;
+  gte(column: string, value: string): DashFilter;
+  lt(column: string, value: string): DashFilter;
+  order(column: string, opts: { ascending: boolean }): DashFilter;
+  limit(count: number): DashFilter;
 }
 
-/** Catmull-Rom smoothing ≈ Chart.js tension 0.35. */
-function smoothPath(pts: [number, number][]): string {
+export interface DashClient {
+  from(table: string): {
+    select(columns: string, options?: { count?: 'exact'; head?: boolean }): DashFilter;
+  };
+}
+
+/** Missing-table shapes PostgREST returns on a pre-v3/v5 DB (SettingsView pattern). */
+export function isMissingTable(err: DbErr): boolean {
+  if (!err) return false;
+  return (
+    err.code === '42P01' ||
+    err.code === 'PGRST205' ||
+    /does not exist|schema cache/i.test(err.message ?? '')
+  );
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** Local-time 'YYYY-MM-DD' key for a date (meeting_date string compare is valid). */
+export function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+export function todayISO(now: Date): string {
+  return dayKey(now);
+}
+
+/** Bucket created_at timestamps into a per-local-day series ending today. */
+export function buildSeries(
+  dates: string[],
+  range: Range,
+  now: Date
+): { labels: string[]; values: number[]; total: number } {
+  const labels: string[] = [];
+  const index = new Map<string, number>();
+  for (let i = range - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    index.set(dayKey(d), labels.length);
+    labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+  }
+  const values = new Array<number>(labels.length).fill(0);
+  let total = 0;
+  for (const iso of dates) {
+    const t = new Date(iso);
+    if (Number.isNaN(t.getTime())) continue;
+    const i = index.get(dayKey(t));
+    if (i !== undefined) {
+      values[i] += 1;
+      total += 1;
+    }
+  }
+  return { labels, values, total };
+}
+
+/** '2 hours ago' / 'yesterday' / '3 days ago' relative times (en admin locale). */
+export function relTime(iso: string, now: Date): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return '';
+  const mins = Math.floor(Math.max(0, now.getTime() - t) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins === 1 ? '1 minute ago' : `${mins} minutes ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const dayDiff = Math.max(
+    1,
+    Math.round((startOfDay(now) - startOfDay(new Date(iso))) / 86400000)
+  );
+  if (dayDiff <= 1) return 'yesterday';
+  if (dayDiff < 30) return `${dayDiff} days ago`;
+  const months = Math.floor(dayDiff / 30);
+  if (months < 12) return months === 1 ? '1 month ago' : `${months} months ago`;
+  const years = Math.floor(dayDiff / 365);
+  return years <= 1 ? '1 year ago' : `${years} years ago`;
+}
+
+export type ActivityEvent = { color: string; text: string; ts: string };
+
+/** Newest-first merge of the per-source event lists, capped at 6 rows. */
+export function mergeActivity(events: ActivityEvent[]): ActivityEvent[] {
+  return [...events]
+    .sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime())
+    .slice(0, 6);
+}
+
+export type DashboardData = {
+  /** null = the query failed (card shows an em-dash + "Couldn't load"). */
+  projects: { published: number; total: number } | null;
+  services: { published: number; total: number } | null;
+  meetings: { upcoming: number; past: number; canceled: number } | null;
+  consultations: { pending: number; total: number } | null;
+  /** created_at ISO strings (last 90 local days); null = chart couldn't load. */
+  chartDates: string[] | null;
+  activity: ActivityEvent[] | null;
+};
+
+type TitledRow = { i18n: { title?: L10n } | null; updated_at: string };
+
+function titleEn(i18n: TitledRow['i18n']): string {
+  return pick(i18n?.title ?? null, 'en') || 'Untitled';
+}
+
+/**
+ * All dashboard queries in parallel. Never throws: a missing table (pre-v3/v5
+ * DB) counts as zero rows silently; any other failure marks just that card as
+ * unavailable (console.warn, em-dash in the UI).
+ */
+export async function fetchDashboard(client: DashClient, now: Date): Promise<DashboardData> {
+  const today = todayISO(now);
+  const since = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 89);
+  const sinceIso = since.toISOString();
+
+  const count = async (
+    table: string,
+    refine?: (q: DashFilter) => DashFilter
+  ): Promise<number | null> => {
+    try {
+      let q = client.from(table).select('*', { count: 'exact', head: true });
+      if (refine) q = refine(q);
+      const res = await q;
+      if (res.error) {
+        if (isMissingTable(res.error)) return 0;
+        console.warn(`[dashboard] count(${table}) failed`, res.error);
+        return null;
+      }
+      return res.count ?? 0;
+    } catch (err) {
+      console.warn(`[dashboard] count(${table}) failed`, err);
+      return null;
+    }
+  };
+
+  const rows = async <T,>(
+    table: string,
+    columns: string,
+    refine?: (q: DashFilter) => DashFilter
+  ): Promise<T[] | null> => {
+    try {
+      let q = client.from(table).select(columns);
+      if (refine) q = refine(q);
+      const res = await q;
+      if (res.error) {
+        if (isMissingTable(res.error)) return [];
+        console.warn(`[dashboard] select(${table}) failed`, res.error);
+        return null;
+      }
+      return (res.data ?? []) as T[];
+    } catch (err) {
+      console.warn(`[dashboard] select(${table}) failed`, err);
+      return null;
+    }
+  };
+
+  const [
+    projTotal,
+    projPublished,
+    svcTotal,
+    svcPublished,
+    mUpcoming,
+    mCompleted,
+    mScheduledPast,
+    mCanceled,
+    cPending,
+    cTotal,
+    chartMeetings,
+    chartConsults,
+    actConsults,
+    actBooked,
+    actCanceled,
+    actProjects,
+    actServices,
+  ] = await Promise.all([
+    count('projects'),
+    count('projects', (q) => q.eq('published', true)),
+    count('services'),
+    count('services', (q) => q.eq('published', true)),
+    count('meetings', (q) => q.eq('status', 'scheduled').gte('meeting_date', today)),
+    count('meetings', (q) => q.eq('status', 'completed')),
+    count('meetings', (q) => q.eq('status', 'scheduled').lt('meeting_date', today)),
+    count('meetings', (q) => q.eq('status', 'canceled')),
+    count('consultation_requests', (q) => q.eq('status', 'new')),
+    count('consultation_requests'),
+    rows<{ created_at: string }>('meetings', 'created_at', (q) => q.gte('created_at', sinceIso)),
+    rows<{ created_at: string }>('consultation_requests', 'created_at', (q) =>
+      q.gte('created_at', sinceIso)
+    ),
+    rows<{ name: string; created_at: string }>('consultation_requests', 'name,created_at', (q) =>
+      q.order('created_at', { ascending: false }).limit(6)
+    ),
+    rows<{ name: string; meeting_date: string; created_at: string }>(
+      'meetings',
+      'name,meeting_date,created_at',
+      (q) => q.order('created_at', { ascending: false }).limit(6)
+    ),
+    rows<{ name: string; meeting_date: string; updated_at: string }>(
+      'meetings',
+      'name,meeting_date,updated_at',
+      (q) => q.eq('status', 'canceled').order('updated_at', { ascending: false }).limit(6)
+    ),
+    rows<TitledRow>('projects', 'i18n,updated_at', (q) =>
+      q.order('updated_at', { ascending: false }).limit(6)
+    ),
+    rows<TitledRow>('services', 'i18n,updated_at', (q) =>
+      q.eq('published', true).order('updated_at', { ascending: false }).limit(6)
+    ),
+  ]);
+
+  const chartDates =
+    chartMeetings === null || chartConsults === null
+      ? null
+      : [...chartMeetings, ...chartConsults].map((r) => r.created_at);
+
+  let activity: ActivityEvent[] | null;
+  const sources = [actConsults, actBooked, actCanceled, actProjects, actServices];
+  if (sources.every((s) => s === null)) {
+    activity = null;
+  } else {
+    const events: ActivityEvent[] = [];
+    for (const r of actConsults ?? []) {
+      events.push({
+        color: '#1F8A5B',
+        text: `New consultation request — ${r.name}`,
+        ts: r.created_at,
+      });
+    }
+    for (const r of actBooked ?? []) {
+      events.push({
+        color: '#2A6FDB',
+        text: `Meeting booked — ${r.name} · ${fmtDate(r.meeting_date)}`,
+        ts: r.created_at,
+      });
+    }
+    for (const r of actCanceled ?? []) {
+      events.push({
+        color: '#D64545',
+        text: `Meeting canceled — ${r.name} · ${fmtDate(r.meeting_date)}`,
+        ts: r.updated_at,
+      });
+    }
+    for (const r of actProjects ?? []) {
+      events.push({
+        color: '#2A6FDB',
+        text: `Project "${titleEn(r.i18n)}" updated`,
+        ts: r.updated_at,
+      });
+    }
+    for (const r of actServices ?? []) {
+      events.push({
+        color: '#FB8500',
+        text: `Service "${titleEn(r.i18n)}" published`,
+        ts: r.updated_at,
+      });
+    }
+    activity = mergeActivity(events);
+  }
+
+  return {
+    projects:
+      projTotal === null || projPublished === null
+        ? null
+        : { published: projPublished, total: projTotal },
+    services:
+      svcTotal === null || svcPublished === null
+        ? null
+        : { published: svcPublished, total: svcTotal },
+    meetings:
+      mUpcoming === null || mCompleted === null || mScheduledPast === null || mCanceled === null
+        ? null
+        : { upcoming: mUpcoming, past: mCompleted + mScheduledPast, canceled: mCanceled },
+    consultations:
+      cPending === null || cTotal === null ? null : { pending: cPending, total: cTotal },
+    chartDates,
+    activity,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Chart (inline SVG — design's orange treatment, no chart libraries)  */
+/* ------------------------------------------------------------------ */
+
+/** Catmull-Rom smoothing ≈ Chart.js tension 0.35, clamped to the plot box. */
+function smoothPath(pts: [number, number][], yMin: number, yMax: number): string {
   if (pts.length < 2) return '';
+  const clampY = (y: number) => Math.min(yMax, Math.max(yMin, y));
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[i - 1] ?? pts[i];
@@ -40,93 +331,15 @@ function smoothPath(pts: [number, number][]): string {
     const p2 = pts[i + 1];
     const p3 = pts[i + 2] ?? p2;
     const c1x = p1[0] + (p2[0] - p0[0]) / 6;
-    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c1y = clampY(p1[1] + (p2[1] - p0[1]) / 6);
     const c2x = p2[0] - (p3[0] - p1[0]) / 6;
-    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    const c2y = clampY(p2[1] - (p3[1] - p1[1]) / 6);
     d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`;
   }
   return d;
 }
 
-const STATS = [
-  {
-    label: 'Visitors Today',
-    value: '84',
-    delta: '↑ 12%',
-    up: true,
-    icon: (
-      <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Visitors This Week',
-    value: '542',
-    delta: '↑ 8%',
-    up: true,
-    icon: (
-      <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-        <line x1="8" y1="15" x2="16" y2="15" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Visitors This Month',
-    value: '2,341',
-    delta: '↑ 5%',
-    up: true,
-    icon: (
-      <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Total Page Views',
-    value: '8,920',
-    delta: '↓ 3%',
-    up: false,
-    icon: (
-      <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-        <circle cx="12" cy="12" r="3" />
-      </svg>
-    ),
-  },
-];
-
-const TOP_PAGES = [
-  { page: '/ (Home)', views: '3,240', time: '2m 14s', bounce: '38%' },
-  { page: '/projects', views: '1,820', time: '1m 52s', bounce: '44%' },
-  { page: '/services', views: '1,105', time: '1m 38s', bounce: '51%' },
-  { page: '/contact', views: '890', time: '0m 58s', bounce: '62%' },
-  { page: '/projects/rimi-latvia', views: '445', time: '3m 10s', bounce: '29%' },
-];
-
-const ACTIVITY = [
-  { color: '#1F8A5B', text: 'New contact form submission', time: '2 hours ago' },
-  { color: '#2A6FDB', text: 'Project "Kepler Club" updated', time: '5 hours ago' },
-  { color: '#FB8500', text: 'Service "Masonry Works" published', time: 'yesterday' },
-  { color: '#2A6FDB', text: 'Project "MOHO Park" created', time: '2 days ago' },
-  { color: '#D64545', text: 'Admin password changed', time: '3 days ago' },
-];
-
-const card: React.CSSProperties = {
-  background: '#fff',
-  border: '1px solid #EAEAE8',
-  borderRadius: 14,
-};
-
-function VisitorChart({ range }: { range: Range }) {
+function RequestsChart({ labels, values }: { labels: string[]; values: number[] }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(720);
   const [hover, setHover] = useState<number | null>(null);
@@ -143,16 +356,15 @@ function VisitorChart({ range }: { range: Range }) {
     return () => ro.disconnect();
   }, []);
 
-  const { labels, values } = useMemo(() => dataFor(range), [range]);
-
   const padTop = 8;
   const padBottom = 4;
-  const yMax = Math.max(20, Math.ceil(Math.max(...values) / 20) * 20);
+  // Integer y scale for counts: a multiple of 4 so quarter gridlines stay whole.
+  const yMax = Math.max(4, Math.ceil(Math.max(...values, 0) / 4) * 4);
   const plotH = height - padTop - padBottom;
   const xFor = (i: number) => (values.length === 1 ? 0 : (i / (values.length - 1)) * width);
   const yFor = (v: number) => padTop + plotH - (v / yMax) * plotH;
   const pts: [number, number][] = values.map((v, i) => [xFor(i), yFor(v)]);
-  const line = smoothPath(pts);
+  const line = smoothPath(pts, padTop, height - padBottom);
   const area = `${line} L ${width} ${height - padBottom} L 0 ${height - padBottom} Z`;
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(yMax * f));
   const labelStep = Math.max(1, Math.ceil(labels.length / 10));
@@ -187,6 +399,8 @@ function VisitorChart({ range }: { range: Range }) {
             height={height}
             viewBox={`0 0 ${width} ${height}`}
             preserveAspectRatio="none"
+            role="img"
+            aria-label="New requests per day"
             onMouseMove={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const x = ((e.clientX - rect.left) / rect.width) * width;
@@ -246,11 +460,12 @@ function VisitorChart({ range }: { range: Range }) {
                 pointerEvents: 'none',
               }}
             >
-              <span style={{ color: '#A8A29E' }}>{labels[hover]}</span> · {values[hover]} visitors
+              <span style={{ color: '#A8A29E' }}>{labels[hover]}</span> · {values[hover]}{' '}
+              {values[hover] === 1 ? 'request' : 'requests'}
             </div>
           )}
         </div>
-        {/* x labels */}
+        {/* x labels — M/D, sparse */}
         <div
           style={{
             display: 'flex',
@@ -263,10 +478,57 @@ function VisitorChart({ range }: { range: Range }) {
         >
           {labels
             .filter((_, i) => i % labelStep === 0)
-            .map((l) => (
-              <span key={l}>{l}</span>
+            .map((l, i) => (
+              <span key={`${l}-${i}`}>{l}</span>
             ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* View                                                                */
+/* ------------------------------------------------------------------ */
+
+const card: CSSProperties = {
+  background: '#fff',
+  border: '1px solid #EAEAE8',
+  borderRadius: 14,
+};
+
+const chartPlaceholder: CSSProperties = {
+  height: 280,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 14,
+  color: '#A8A29E',
+};
+
+const IconConsultations = () => (
+  <svg
+    width={19}
+    height={19}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+  </svg>
+);
+
+function StatSkeleton() {
+  return (
+    <div style={{ ...card, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="adm-skel" style={{ width: 19, height: 19 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <div className="adm-skel" style={{ width: 90, height: 13 }} />
+        <div className="adm-skel" style={{ width: 64, height: 26 }} />
+        <div className="adm-skel" style={{ width: 120, height: 12 }} />
       </div>
     </div>
   );
@@ -275,11 +537,85 @@ function VisitorChart({ range }: { range: Range }) {
 export default function DashboardView() {
   const { setSubtitle } = useAdminShell();
   const [range, setRange] = useState<Range>(7);
+  const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    setSubtitle('Site traffic and recent activity');
+    setSubtitle('Live statistics and recent activity');
     return () => setSubtitle(null);
   }, [setSubtitle]);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      if (!supabase) {
+        console.warn('[dashboard] Supabase is not configured — stats unavailable');
+        if (alive) {
+          setData({
+            projects: null,
+            services: null,
+            meetings: null,
+            consultations: null,
+            chartDates: null,
+            activity: null,
+          });
+        }
+        return;
+      }
+      const d = await fetchDashboard(supabase as unknown as DashClient, new Date());
+      if (alive) setData(d);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const loading = data === null;
+  const loadedAt = useMemo(() => new Date(), [data]);
+  const series = useMemo(
+    () => (data?.chartDates ? buildSeries(data.chartDates, range, loadedAt) : null),
+    [data, range, loadedAt]
+  );
+
+  const stats = loading
+    ? null
+    : [
+        {
+          key: 'projects',
+          label: 'Projects',
+          icon: <IconProjects size={19} strokeWidth={1.8} />,
+          value: data.projects ? data.projects.published.toLocaleString('en-US') : '—',
+          sub: data.projects
+            ? `of ${data.projects.total.toLocaleString('en-US')} total`
+            : "Couldn't load",
+        },
+        {
+          key: 'services',
+          label: 'Services',
+          icon: <IconServices size={19} strokeWidth={1.8} />,
+          value: data.services ? data.services.published.toLocaleString('en-US') : '—',
+          sub: data.services
+            ? `of ${data.services.total.toLocaleString('en-US')} total`
+            : "Couldn't load",
+        },
+        {
+          key: 'meetings',
+          label: 'Meetings',
+          icon: <IconCalendar size={19} strokeWidth={1.8} />,
+          value: data.meetings ? data.meetings.upcoming.toLocaleString('en-US') : '—',
+          sub: data.meetings
+            ? `${data.meetings.past.toLocaleString('en-US')} past · ${data.meetings.canceled.toLocaleString('en-US')} canceled`
+            : "Couldn't load",
+        },
+        {
+          key: 'consultations',
+          label: 'Pending consultations',
+          icon: <IconConsultations />,
+          value: data.consultations ? data.consultations.pending.toLocaleString('en-US') : '—',
+          sub: data.consultations
+            ? `${data.consultations.total.toLocaleString('en-US')} total`
+            : "Couldn't load",
+        },
+      ];
 
   const rangeBtn = (label: string, r: Range) => {
     const active = range === r;
@@ -305,7 +641,7 @@ export default function DashboardView() {
     );
   };
 
-  const quickAction = (icon: React.ReactNode, label: string, to: string, external = false) => {
+  const quickAction = (icon: ReactNode, label: string, to: string, external = false) => {
     const inner = (
       <>
         <span
@@ -329,7 +665,7 @@ export default function DashboardView() {
         </svg>
       </>
     );
-    const style: React.CSSProperties = {
+    const style: CSSProperties = {
       ...card,
       padding: 20,
       display: 'flex',
@@ -360,38 +696,26 @@ export default function DashboardView() {
           gap: 18,
         }}
       >
-        {STATS.map((s) => (
-          <div
-            key={s.label}
-            style={{ ...card, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: '#A8A29E', display: 'flex' }}>{s.icon}</span>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: s.up ? '#1F8A5B' : '#D64545',
-                  background: s.up ? '#E6F4EC' : '#FBE7E7',
-                  padding: '3px 8px',
-                  borderRadius: 999,
-                }}
+        {stats === null
+          ? [0, 1, 2, 3].map((i) => <StatSkeleton key={i} />)
+          : stats.map((s) => (
+              <div
+                key={s.key}
+                style={{ ...card, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}
               >
-                {s.delta}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 13, color: '#A8A29E' }}>{s.label}</span>
-              <span style={{ fontSize: 26, fontWeight: 500, letterSpacing: -0.5 }}>{s.value}</span>
-            </div>
-          </div>
-        ))}
+                <span style={{ color: '#A8A29E', display: 'flex' }}>{s.icon}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontSize: 13, color: '#A8A29E' }}>{s.label}</span>
+                  <span style={{ fontSize: 26, fontWeight: 500, letterSpacing: -0.5 }}>
+                    {s.value}
+                  </span>
+                  <span style={{ fontSize: 12, color: '#A8A29E' }}>{s.sub}</span>
+                </div>
+              </div>
+            ))}
       </div>
 
-      {/* chart */}
+      {/* requests chart */}
       <div style={{ ...card, padding: '22px 24px' }}>
         <div
           style={{
@@ -404,99 +728,68 @@ export default function DashboardView() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>Visitor Overview</h2>
-            <span style={{ fontSize: 12, color: '#A8A29E' }}>Demo data</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>Requests</h2>
             <span style={{ fontSize: 13, color: '#A8A29E' }}>Last {range} days</span>
-            <div style={{ display: 'flex', gap: 4, background: '#F2F1EF', padding: 4, borderRadius: 11 }}>
-              {rangeBtn('Last 7 days', 7)}
-              {rangeBtn('Last 30 days', 30)}
-              {rangeBtn('Last 90 days', 90)}
-            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 4, background: '#F2F1EF', padding: 4, borderRadius: 11 }}>
+            {rangeBtn('Last 7 days', 7)}
+            {rangeBtn('Last 30 days', 30)}
+            {rangeBtn('Last 90 days', 90)}
           </div>
         </div>
-        <VisitorChart range={range} />
+        {loading ? (
+          <div className="adm-skel" style={{ height: 250, borderRadius: 10 }} />
+        ) : data.chartDates === null ? (
+          <div style={chartPlaceholder}>Couldn't load</div>
+        ) : series && series.total > 0 ? (
+          <RequestsChart labels={series.labels} values={series.values} />
+        ) : (
+          <div style={chartPlaceholder}>No requests in this period</div>
+        )}
       </div>
 
-      {/* top pages + activity */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))',
-          gap: 22,
-        }}
-      >
-        <div style={{ ...card, overflow: 'hidden' }}>
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 17,
-              fontWeight: 600,
-              padding: '18px 24px',
-              borderBottom: '1px solid #F2F1EF',
-            }}
-          >
-            Top Pages
-          </h2>
-          <div className="adm-scroll" style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: 460 }}>
+      {/* recent activity */}
+      <div style={card}>
+        <h2
+          style={{
+            margin: 0,
+            fontSize: 17,
+            fontWeight: 600,
+            padding: '18px 24px',
+            borderBottom: '1px solid #F2F1EF',
+          }}
+        >
+          Recent Activity
+        </h2>
+        <div style={{ padding: '8px 24px 16px' }}>
+          {loading &&
+            [0, 1, 2, 3, 4, 5].map((i) => (
               <div
+                key={i}
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1fr 1fr 1fr',
-                  gap: 12,
-                  padding: '12px 24px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  letterSpacing: 0.4,
-                  textTransform: 'uppercase',
-                  color: '#A8A29E',
-                  borderBottom: '1px solid #F2F1EF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 11,
+                  padding: '11px 0',
+                  borderBottom: '1px solid #F5F4F2',
                 }}
               >
-                <span>Page</span>
-                <span>Views</span>
-                <span>Avg. Time</span>
-                <span>Bounce</span>
+                <div className="adm-skel" style={{ width: 9, height: 9, borderRadius: '50%' }} />
+                <div className="adm-skel" style={{ flex: 1, height: 13 }} />
+                <div className="adm-skel" style={{ width: 64, height: 12 }} />
               </div>
-              {TOP_PAGES.map((p) => (
-                <div
-                  key={p.page}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1fr 1fr 1fr',
-                    gap: 12,
-                    padding: '12px 24px',
-                    borderBottom: '1px solid #F5F4F2',
-                    fontSize: 14,
-                  }}
-                >
-                  <span style={{ fontFamily: 'monospace', color: '#160C00' }}>{p.page}</span>
-                  <span style={{ color: '#54504D' }}>{p.views}</span>
-                  <span style={{ color: '#54504D' }}>{p.time}</span>
-                  <span style={{ color: '#54504D' }}>{p.bounce}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={card}>
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 17,
-              fontWeight: 600,
-              padding: '18px 24px',
-              borderBottom: '1px solid #F2F1EF',
-            }}
-          >
-            Recent Activity
-          </h2>
-          <div style={{ padding: '8px 24px 16px' }}>
-            {ACTIVITY.map((a) => (
+            ))}
+          {!loading && data.activity === null && (
+            <div style={{ padding: '14px 0', fontSize: 14, color: '#A8A29E' }}>Couldn't load</div>
+          )}
+          {!loading && data.activity !== null && data.activity.length === 0 && (
+            <div style={{ padding: '14px 0', fontSize: 14, color: '#A8A29E' }}>No activity yet</div>
+          )}
+          {!loading &&
+            data.activity !== null &&
+            data.activity.map((a, i) => (
               <div
-                key={a.text}
+                key={`${a.ts}-${i}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -516,11 +809,10 @@ export default function DashboardView() {
                 />
                 <span style={{ fontSize: 14, flex: 1 }}>{a.text}</span>
                 <span style={{ fontSize: 12, color: '#A8A29E', whiteSpace: 'nowrap' }}>
-                  {a.time}
+                  {relTime(a.ts, loadedAt)}
                 </span>
               </div>
             ))}
-          </div>
         </div>
       </div>
 

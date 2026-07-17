@@ -43,6 +43,37 @@ const sectionReveal: Variants = {
   },
 };
 
+/* v5 legibility blur (site_settings.blur_sections via useSiteChrome().blur):
+   the hero panel keeps the contract's 34px 40px padding on desktop and drops
+   to 22px 20px on phones. */
+const BLUR_CSS = `
+  @media (max-width: 620px) {
+    .shk-hero-blur { padding: 22px 20px !important; }
+  }
+`;
+
+const heroBlurPanel: React.CSSProperties = {
+  background: 'rgba(22,12,0,0.34)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  padding: '34px 40px',
+  borderRadius: 22,
+  width: 'fit-content',
+  maxWidth: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 16,
+};
+
+const projectBlurPanel: React.CSSProperties = {
+  background: 'rgba(22,12,0,0.42)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  padding: '16px 22px',
+  borderRadius: 16,
+  maxWidth: '100%',
+};
+
 /* 46px-tall inputs (SHAKUR-Mobile hero note; matches the design's computed
    13px padding + 18px line = 46px box). */
 const heroInputStyle: React.CSSProperties = {
@@ -113,12 +144,29 @@ export default function Home() {
             style={{ maxWidth: 1320, padding: '56px 30px', gap: 48 }}
           >
             <div className="flex flex-col" style={{ flex: 1, minWidth: 280, maxWidth: 680, gap: 16 }}>
-              <h1 id="hero-title" className="m-0 font-serif font-bold text-white text-hero-title">
-                {pick(content.text.heroTitle, lang)}
-              </h1>
-              <p className="m-0 text-on-dark" style={{ fontSize: 17, lineHeight: 1.75, maxWidth: 560 }}>
-                {pick(content.text.heroSub, lang)}
-              </p>
+              {chrome.blur.hero ? (
+                /* v5: legibility backdrop behind the headline (admin-toggled) */
+                <>
+                  <style>{BLUR_CSS}</style>
+                  <div className="shk-hero-blur" style={heroBlurPanel}>
+                    <h1 id="hero-title" className="m-0 font-serif font-bold text-white text-hero-title">
+                      {pick(content.text.heroTitle, lang)}
+                    </h1>
+                    <p className="m-0 text-on-dark" style={{ fontSize: 17, lineHeight: 1.75, maxWidth: 560 }}>
+                      {pick(content.text.heroSub, lang)}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 id="hero-title" className="m-0 font-serif font-bold text-white text-hero-title">
+                    {pick(content.text.heroTitle, lang)}
+                  </h1>
+                  <p className="m-0 text-on-dark" style={{ fontSize: 17, lineHeight: 1.75, maxWidth: 560 }}>
+                    {pick(content.text.heroSub, lang)}
+                  </p>
+                </>
+              )}
             </div>
 
             <form
@@ -462,22 +510,42 @@ export default function Home() {
                       }}
                     />
                     <div className="absolute inset-0" style={{ background: gradients.spaceCard }} />
-                    <span
-                      className="absolute inline-flex items-center text-white font-medium"
-                      style={{
-                        left: 16,
-                        bottom: 16,
-                        gap: 7,
-                        background: 'rgba(22,12,0,0.72)',
-                        backdropFilter: 'blur(6px)',
-                        fontSize: 13,
-                        padding: '7px 12px',
-                        borderRadius: 8,
-                      }}
-                    >
-                      <Pin size={13} />
-                      {SPACE_LABELS[sp.slug] ?? sp.loc}
-                    </span>
+                    {chrome.blur.projects ? (
+                      /* v5: caption panel — title + location on a blur backdrop */
+                      <span
+                        className="absolute flex"
+                        style={{ left: 16, right: 16, bottom: 16, justifyContent: 'flex-start' }}
+                      >
+                        <span className="flex flex-col" style={projectBlurPanel}>
+                          <span
+                            className="text-white font-semibold"
+                            style={{ fontSize: 21, lineHeight: 1.15, letterSpacing: '-0.5px' }}
+                          >
+                            {pick(sp.i18n.title, lang)}
+                          </span>
+                          <span style={{ fontSize: 13.5, color: '#E7E5E4', marginTop: 4 }}>
+                            {SPACE_LABELS[sp.slug] ?? sp.loc}
+                          </span>
+                        </span>
+                      </span>
+                    ) : (
+                      <span
+                        className="absolute inline-flex items-center text-white font-medium"
+                        style={{
+                          left: 16,
+                          bottom: 16,
+                          gap: 7,
+                          background: 'rgba(22,12,0,0.72)',
+                          backdropFilter: 'blur(6px)',
+                          fontSize: 13,
+                          padding: '7px 12px',
+                          borderRadius: 8,
+                        }}
+                      >
+                        <Pin size={13} />
+                        {SPACE_LABELS[sp.slug] ?? sp.loc}
+                      </span>
+                    )}
                   </Link>
                 ))}
               </div>

@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import type { ServiceRow } from './db';
-import { FALLBACK_SERVICES } from '../data';
 
 /**
- * Services for the public site — same static-fallback pattern as useProjects:
- * published rows ordered by sort_order, or the design's static list when
- * Supabase is unconfigured / errors / is empty.
+ * Services for the public site — same live-only pattern as useProjects (v5):
+ * published rows ordered by sort_order straight from Supabase, [] while
+ * loading, [] on error / v1-shape rows / unconfigured Supabase. No static
+ * fallback content, ever — empty means the designed empty states render.
  */
 export function useServices() {
-  const [services, setServices] = useState<ServiceRow[]>(FALLBACK_SERVICES);
+  const [services, setServices] = useState<ServiceRow[]>([]);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [source, setSource] = useState<'static' | 'supabase'>('static');
 
@@ -27,11 +27,11 @@ export function useServices() {
       if (cancelled) return;
 
       if (error) {
-        console.error('[shakur] services query failed, using static content:', error.message);
+        console.warn('[shakur] services query failed — rendering no services:', error.message);
       } else {
         // Guard against a half-migrated database (see useProjects). An EMPTY
         // result is still live data — the home page shows its designed
-        // "No services yet" state instead of the static seed cards.
+        // "No services yet" state.
         const rows = data ?? [];
         const v2 = rows.every(
           (r) => r && typeof r.i18n === 'object' && r.i18n !== null && Array.isArray(r.media)
@@ -41,7 +41,7 @@ export function useServices() {
           setSource('supabase');
         } else {
           console.warn(
-            '[shakur] services table has an unexpected shape — run supabase/migrate-v2.sql; using static content'
+            '[shakur] services table has an unexpected shape — run supabase/migrate-v2.sql; rendering no services'
           );
         }
       }

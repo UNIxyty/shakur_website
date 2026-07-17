@@ -8,26 +8,31 @@ type Status = 'idle' | 'submitting' | 'success' | 'error';
 
 /**
  * Consultation lead-capture modal — ported from the consult* overlay in
- * Shakur.dc.html. Pre-fills email/phone from the hero form, walks
+ * Shakur.dc.html. Pre-fills its fields from the caller's form (hero:
+ * email/phone; contact page: name/email/phone/message), walks
  * idle → submitting → success/error, and POSTs /api/consultations.
  * Error keeps the entered values so "Try again" just re-submits.
  */
 export default function ConsultationModal({
   onClose,
+  initialName = '',
   initialEmail = '',
   initialPhone = '',
+  initialMessage = '',
 }: {
   onClose: () => void;
+  initialName?: string;
   initialEmail?: string;
   initialPhone?: string;
+  initialMessage?: string;
 }) {
   const { t, lang } = useLang();
 
   const [status, setStatus] = useState<Status>('idle');
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialName);
   const [phone, setPhone] = useState(initialPhone);
   const [email, setEmail] = useState(initialEmail);
-  const [msg, setMsg] = useState('');
+  const [msg, setMsg] = useState(initialMessage);
   const [fieldErr, setFieldErr] = useState('');
 
   const submitting = status === 'submitting';

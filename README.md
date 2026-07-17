@@ -83,16 +83,31 @@ form) that stores the request and emails the admin.
   logos via upload, rename, replace, delete, drag-to-reorder per row, and a
   5–120 s speed slider the public marquee follows), integrations (read-only,
   masked — env is the source of truth), notification toggles.
-- **Dashboard** — overview with stat cards and a visitor chart (demo data; there is
-  no analytics backend) plus quick actions.
+- **Website text (v5)** — every fixed string on the public site (nav, hero, forms,
+  FAQ, footer, modals…) listed by section with **EN / LV / RU inline editing**,
+  per-language completion dots, search and All / Unsaved / Needs-translation
+  filters. Per key: **Save draft / Publish / Revert** (drafts are invisible to
+  visitors); per section and global **Publish all** with confirmation. Hovering a
+  row's eye icon renders the **actual live component** in a scaled popover —
+  current (even unsaved) values injected, the edited string highlighted in place,
+  switchable EN/LV/RU. The Hero and Projects-showcase section headers also carry
+  the **"Blur panel behind text"** toggle (see below). Edits go live at runtime —
+  no rebuild.
+- **Dashboard (v5)** — real statistics from the database: published/total projects
+  and services, upcoming meetings (with past/canceled counts), pending consultation
+  requests, a requests chart (new bookings + consultation requests per day, 7/30/90
+  day ranges) and a real recent-activity feed — plus quick actions. Loading
+  skeletons while queries run; no demo numbers anywhere.
 
 ## Data & localization model
 
 Localized text lives as JSON per field: `{ "en": …, "lv": …, "ru": … }`. Shared
 fields (media, slug, category, dates, client, location, url) are single-value.
-Types in `src/lib/db.ts`. Public pages read published rows via the anon key and fall
-back to the static content in `src/data.ts` when Supabase is unreachable **or still
-has the old v1 column layout** — the site never white-screens on a half-migrated DB.
+Types in `src/lib/db.ts`. Public pages read published rows via the anon key.
+**v5 removed the static sample projects/services** that used to fill the grids as a
+fallback: all project/service content now comes from Supabase only. An empty (or
+unreachable, or still-v1) database renders the designed "No projects/services yet"
+empty states — never stale sample cards, and never a white screen.
 
 Home-page content lives in `home_sections` (one row per section, `draft` +
 `published` jsonb columns). Visitors can only reach the published copy, through the
@@ -100,15 +115,35 @@ Home-page content lives in `home_sections` (one row per section, `draft` +
 published content over the static defaults (`useHome()`), so an empty or
 pre-migration DB still renders the complete page.
 
-**Static copy — `src/i18n/strings.json` (v4):** every fixed string on the public
-site (nav, hero, forms, FAQ, footer, modals, coming-soon page, aria-labels, month/
-weekday names…) lives in one hand-editable JSON file, nested
-`section → [subsection →] key → { en, lv, ru }`. The site *reads* this file —
-edit a string, rebuild, and it changes everywhere. `src/i18n.ts` is just the
-loader; keys are typed from the JSON, so a typo'd `t.some_key` fails
-`tsc`. To add copy: drop a new leaf (all three languages) into the right section
-and reference it as `t.<key>`. Dynamic content (services, projects, home CMS) is
-deliberately *not* here — it comes from Supabase.
+**Static copy — `src/i18n/strings.json` + the `site_texts` table (v5):** every
+fixed string on the public site (nav, hero, forms, FAQ, footer, modals,
+coming-soon page, aria-labels, month/weekday names…) is keyed in one JSON file,
+nested `section → [subsection →] key → { en, lv, ru }`. Since v5 the file is the
+**seed and fallback**; the live values come from the `site_texts` table, edited in
+**Admin ▸ Website text** and applied at runtime (no rebuild). Each key stores a
+`published` and a `draft` `{en,lv,ru}` value; visitors only ever see `published`
+(through the `site_texts_public` view — drafts are invisible to the anon key,
+same pattern as the home CMS). Keys with no published row keep the file's copy,
+so a fresh or pre-migration DB renders the complete site. `src/i18n.ts` is the
+typed loader — a typo'd `t.some_key` fails `tsc`. To add NEW copy: drop a leaf
+(all three languages) into the right `strings.json` section, reference it as
+`t.<key>`, and it appears in the Website-text manager automatically. Dynamic
+content (services, projects, home CMS) is deliberately *not* here — it comes
+from Supabase.
+
+**Blur panels (v5):** the Hero and Projects-showcase sections have an optional
+translucent, blurred backdrop behind their text for legibility over photos.
+Toggle per section in **Admin ▸ Website text** (section header widget);
+persisted in `site_settings.blur_sections` (jsonb), read by the public page at
+runtime. Defaults: both **off** (matching the public design; the Text Manager mock's hero-on was a seeded demo state).
+
+**Company registry links (v5):** the footer's badge cards were replaced by
+**Lursoft** and **Firmas.lv** chips linking to the SIA SHAKUR company pages
+(reg. no. 51203071901). The URLs live in `REGISTRY_LINKS` in `src/data.ts` —
+⚠️ confirm they point at the right company profile and adjust there if not.
+The footer's Services column now lists the actual published services from
+Supabase (first five, in their configured order) and hides itself when there
+are none.
 
 ---
 
@@ -120,9 +155,11 @@ cp .env.example .env     # optional — see below
 npm run dev              # http://localhost:5173
 ```
 
-Supabase is optional for local dev: without `.env` the public site renders from
-static content; only `/admin` needs Supabase. The booking flow runs in a clearly
-labeled demo mode unless the API server is reachable.
+Supabase is optional for local dev: without `.env` the public site renders its
+copy from `strings.json` with the designed empty states in the project/service
+grids (since v5 there is no sample content); only `/admin` needs Supabase. The
+booking flow runs in a clearly labeled demo mode unless the API server is
+reachable.
 
 To run the API locally: `cd server && npm install && node index.js` (reads the same
 `.env` vars; every key-dependent feature degrades gracefully when its key is empty).
@@ -144,9 +181,10 @@ npm run lint      # tsc --noEmit
    | Situation | Run |
    | --- | --- |
    | Fresh project (nothing deployed yet) | `supabase/schema.sql`, then `supabase/storage.sql` |
-   | **Existing v1 database** (deployed before the admin-panel rebuild) | `supabase/migrate-v2.sql`, then `migrate-v3.sql`, then `migrate-v4.sql`, then `storage.sql` |
-   | **Existing v2 database** (has `i18n`/`media` but no `home_sections`) | `supabase/migrate-v3.sql`, then `migrate-v4.sql`, then `storage.sql` |
-   | **Existing v3 database** (has `home_sections` but no `site_logos`) | `supabase/migrate-v4.sql` |
+   | **Existing v1 database** (deployed before the admin-panel rebuild) | `supabase/migrate-v2.sql`, then `migrate-v3.sql`, then `migrate-v4.sql`, then `migrate-v5.sql`, then `storage.sql` |
+   | **Existing v2 database** (has `i18n`/`media` but no `home_sections`) | `supabase/migrate-v3.sql`, then `migrate-v4.sql`, then `migrate-v5.sql`, then `storage.sql` |
+   | **Existing v3 database** (has `home_sections` but no `site_logos`) | `supabase/migrate-v4.sql`, then `migrate-v5.sql` |
+   | **Existing v4 database** (has `site_logos` but no `site_texts`) | `supabase/migrate-v5.sql` |
 
    `migrate-v2.sql` upgrades in place without losing rows you created: it backfills
    the new `i18n`/`media` JSON from the old text columns, then adds the `services`,
@@ -158,7 +196,9 @@ npm run lint      # tsc --noEmit
    **note:** the runtime status defaults to `live`; if your site is currently
    hidden via `VITE_SITE_MODE=coming_soon`, flip the switch in Settings right
    after migrating (or uncomment the `update … set status='coming_soon'` line at
-   the bottom of the script). All scripts are idempotent — safe to
+   the bottom of the script). `migrate-v5.sql` adds the `site_texts` table +
+   `site_texts_public` view (the Website-text manager's store) and the
+   `site_settings.blur_sections` column. All scripts are idempotent — safe to
    run again.
 
    Until the migrations run, the deployed site shows its built-in static content

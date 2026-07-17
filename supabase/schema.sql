@@ -1,6 +1,7 @@
--- SHAKUR — v4 schema: projects (i18n/media JSON), services, meetings,
--- availability, site_settings (+ v4 status/marquee_speed_s), home_sections
--- (+ home_public view), consultation_requests, media_assets, site_logos.
+-- SHAKUR — v5 schema: projects (i18n/media JSON), services, meetings,
+-- availability, site_settings (+ v4 status/marquee_speed_s, v5
+-- blur_sections), home_sections (+ home_public view), consultation_requests,
+-- media_assets, site_logos, site_texts (+ site_texts_public view).
 -- FULL fresh-install script. Idempotent — safe to re-run.
 -- Run in the Supabase SQL editor, or: psql "$DATABASE_URL" -f supabase/schema.sql
 --
@@ -176,6 +177,10 @@ create table if not exists public.site_settings (
   -- designed 25/30 ratio client-side)
   marquee_speed_s      integer     not null default 30
                        check (marquee_speed_s between 5 and 120),
+  -- v5: "Blur panel behind text" toggles (Website text manager). jsonb so
+  -- future sections need no schema change.
+  blur_sections        jsonb       not null
+                       default '{"hero": false, "projects": false}'::jsonb,
   updated_at           timestamptz not null default now()
 );
 
@@ -1496,3 +1501,60 @@ from (values
   (2, 'Kepler',           'images/logo-def-5.png',   4)
 ) as s("row", name, img, sort_order)
 where not exists (select 1 from public.site_logos);
+
+-- ===========================================================================
+-- v5: site_texts — the editable i18n store behind the admin "Website text"
+-- manager. Each row overrides one flat i18n key from src/i18n/strings.json
+-- (which remains the seed/fallback: keys with no row, or with a null
+-- published value, keep the file's copy).
+--   published jsonb {en,lv,ru} — what the public site renders.
+--   draft     jsonb {en,lv,ru} — admin-only work in progress.
+-- The public site reads through site_texts_public (published only), the same
+-- pattern as home_public: the table has NO anon policy, so drafts never
+-- leave the admin.
+-- ===========================================================================
+create table if not exists public.site_texts (
+  key        text primary key,   -- flat i18n leaf key, e.g. 'hero_title'
+  published  jsonb,              -- {en,lv,ru}; null = never published
+  draft      jsonb,              -- {en,lv,ru}; null = no pending draft
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists site_texts_set_updated_at on public.site_texts;
+create trigger site_texts_set_updated_at
+  before update on public.site_texts
+  for each row execute function public.set_updated_at();
+
+alter table public.site_texts enable row level security;
+
+drop policy if exists "authenticated read site texts" on public.site_texts;
+create policy "authenticated read site texts"
+  on public.site_texts for select
+  to authenticated
+  using (true);
+
+drop policy if exists "authenticated insert site texts" on public.site_texts;
+create policy "authenticated insert site texts"
+  on public.site_texts for insert
+  to authenticated
+  with check (true);
+
+drop policy if exists "authenticated update site texts" on public.site_texts;
+create policy "authenticated update site texts"
+  on public.site_texts for update
+  to authenticated
+  using (true)
+  with check (true);
+
+drop policy if exists "authenticated delete site texts" on public.site_texts;
+create policy "authenticated delete site texts"
+  on public.site_texts for delete
+  to authenticated
+  using (true);
+
+create or replace view public.site_texts_public as
+  select key, published
+  from public.site_texts
+  where published is not null;
+
+grant select on public.site_texts_public to anon, authenticated;

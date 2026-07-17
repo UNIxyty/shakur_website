@@ -355,10 +355,3 @@ export const NotFoundArt = ({ label }: { label?: string }) => (
     <line x1="207" y1="181" x2="238" y2="212" stroke="#FB8500" strokeWidth="5" strokeLinecap="round" />
   </svg>
 );
-
-/** Framer mark in the footer. */
-export const FramerMark = () => (
-  <svg width="18" height="26" viewBox="0 0 18 26" fill="#160C00" aria-hidden="true">
-    <path d="M0 0h18v8.667H9L0 0Zm0 8.667h9L18 17.333H0V8.667ZM0 17.333h9V26L0 17.333Z" />
-  </svg>
-);

@@ -22,7 +22,7 @@ type Filter = (typeof CATEGORIES)[number];
 
 export default function Services() {
   const { t, lang } = useLang();
-  const { services } = useServices();
+  const { services, loading } = useServices();
   const [filter, setFilter] = useState<Filter>('All');
 
   const published = services.filter((s) => s.published);
@@ -122,7 +122,9 @@ export default function Services() {
           })}
         </motion.div>
 
-        {list.length === 0 && (
+        {/* Empty state only after the query settles — no flash while loading
+            (v5 contract §3); in-flight the grid area is simply blank. */}
+        {!loading && list.length === 0 && (
           <div className="text-center text-placeholder" style={{ padding: '80px 24px' }}>
             <p className="m-0" style={{ fontSize: 16 }}>
               {t.sp_empty}

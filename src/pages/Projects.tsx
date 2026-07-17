@@ -14,7 +14,7 @@ import { bgImage } from '../lib/assets';
 
 export default function Projects() {
   const { t, lang } = useLang();
-  const { projects } = useProjects();
+  const { projects, loading } = useProjects();
   const [visible, setVisible] = useState(4);
 
   const shown = projects.slice(0, visible);
@@ -37,6 +37,9 @@ export default function Projects() {
             {t.projects_page_title}
           </Reveal>
 
+          {/* While the Supabase query is in flight the section shell renders
+              with no cards — never a placeholder flash (v5 contract §3). */}
+          {!loading && (
           <RevealGroup
             className="grid"
             style={{
@@ -80,6 +83,7 @@ export default function Projects() {
               </RevealItem>
             ))}
           </RevealGroup>
+          )}
 
           {canLoadMore && (
             <div className="flex justify-center" style={{ marginTop: 36 }}>
