@@ -1,8 +1,9 @@
--- SHAKUR — v6 schema: projects (i18n/media JSON), services, meetings,
+-- SHAKUR — v7 schema: projects (i18n/media JSON), services, meetings,
 -- availability, site_settings (+ v4 status/marquee_speed_s, v5
 -- blur_sections), home_sections (+ home_public view), consultation_requests,
 -- media_assets, site_logos, site_texts (+ site_texts_public view),
--- page_views (+ aggregate views — v6 self-hosted analytics).
+-- page_views (+ aggregate views — v6 self-hosted analytics). All public
+-- read views are security_invoker with matching narrow grants (v7).
 -- FULL fresh-install script. Idempotent — safe to re-run.
 -- Run in the Supabase SQL editor, or: psql "$DATABASE_URL" -f supabase/schema.sql
 --
@@ -12,8 +13,8 @@
 --
 -- Upgrading a deployed database? v1 -> v2: supabase/migrate-v2.sql, then
 -- v2 -> v3: supabase/migrate-v3.sql, then v3 -> v4: supabase/migrate-v4.sql
--- (+ migrate-v4-media.sql), then migrate-v5.sql, then migrate-v6.sql.
--- This file assumes a fresh install.
+-- (+ migrate-v4-media.sql), then migrate-v5.sql, then migrate-v6.sql, then
+-- migrate-v7.sql. This file assumes a fresh install.
 
 create extension if not exists "pgcrypto";
 
@@ -1320,16 +1321,27 @@ create policy "authenticated delete home sections"
   to authenticated
   using (true);
 
--- Public read of PUBLISHED content only. The view is owned by postgres (the
--- role running this script) and is not security_invoker, so selecting from it
--- runs with the owner's privileges and bypasses home_sections RLS — which is
--- the point: anon gets exactly the published column, never drafts.
-create or replace view public.home_public as
+-- Public read of PUBLISHED content only. security_invoker (v7): the view runs
+-- with the caller's rights, so anon's whole surface on home_sections is the
+-- column grant + policy below — (section, published) of published rows. The
+-- draft column is not granted to anon at all, so drafts stay unreadable even
+-- by querying the base table directly.
+create or replace view public.home_public
+  with (security_invoker = on) as
   select section, published
   from public.home_sections
   where published is not null;
 
 grant select on public.home_public to anon, authenticated;
+
+revoke select on public.home_sections from anon;
+grant select (section, published) on public.home_sections to anon;
+
+drop policy if exists "anon read published home sections" on public.home_sections;
+create policy "anon read published home sections"
+  on public.home_sections for select
+  to anon
+  using (published is not null);
 
 -- ===========================================================================
 -- v3: consultation_requests — hero "Request a Consultation" leads. Written
@@ -1554,12 +1566,24 @@ create policy "authenticated delete site texts"
   to authenticated
   using (true);
 
-create or replace view public.site_texts_public as
+-- security_invoker (v7): same pattern as home_public — anon's surface is the
+-- (key, published) column grant + published-rows policy; draft is ungranted.
+create or replace view public.site_texts_public
+  with (security_invoker = on) as
   select key, published
   from public.site_texts
   where published is not null;
 
 grant select on public.site_texts_public to anon, authenticated;
+
+revoke select on public.site_texts from anon;
+grant select (key, published) on public.site_texts to anon;
+
+drop policy if exists "anon read published site texts" on public.site_texts;
+create policy "anon read published site texts"
+  on public.site_texts for select
+  to anon
+  using (published is not null);
 
 -- ===========================================================================
 -- page_views — v6 self-hosted analytics (cookieless; nothing personal stored)
@@ -1589,7 +1613,17 @@ create policy "anyone can log a page view"
   to anon, authenticated
   with check (true);
 
-create or replace view public.page_view_daily as
+-- v7: the admin dashboard reads the aggregates below as security_invoker
+-- views, so authenticated needs a real SELECT policy. anon has none — the
+-- public key stays write-only (logs a view, reads zero rows back).
+drop policy if exists "authenticated read page views" on public.page_views;
+create policy "authenticated read page views"
+  on public.page_views for select
+  to authenticated
+  using (true);
+
+create or replace view public.page_view_daily
+  with (security_invoker = on) as
   select created_at::date as day,
          device,
          count(*)::int as views,
@@ -1598,7 +1632,8 @@ create or replace view public.page_view_daily as
   where created_at > now() - interval '90 days'
   group by 1, 2;
 
-create or replace view public.page_view_paths as
+create or replace view public.page_view_paths
+  with (security_invoker = on) as
   select created_at::date as day,
          path,
          count(*)::int as views
