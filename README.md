@@ -98,6 +98,15 @@ form) that stores the request and emails the admin.
   requests, a requests chart (new bookings + consultation requests per day, 7/30/90
   day ranges) and a real recent-activity feed — plus quick actions. Loading
   skeletons while queries run; no demo numbers anywhere.
+- **Site traffic (v6)** — self-hosted, cookieless page-view analytics. The public
+  site logs each route view into the `page_views` table (path, external referrer
+  hostname, language, mobile/desktop, and a random per-tab-session visit id —
+  no cookies, no IPs, no user agents, so no consent banner is needed). The
+  dashboard's Site traffic card shows page views, unique visits, mobile share,
+  a daily chart and Top pages for the same 7/30/90 ranges. Signed-in admins are
+  never counted; neither are the coming-soon page or `npm run dev`. The anon key
+  is write-only here (RLS: insert-only policy; the dashboard reads through
+  `page_view_daily`/`page_view_paths`, granted to authenticated only).
 
 ## Data & localization model
 
@@ -181,10 +190,11 @@ npm run lint      # tsc --noEmit
    | Situation | Run |
    | --- | --- |
    | Fresh project (nothing deployed yet) | `supabase/schema.sql`, then `supabase/storage.sql` |
-   | **Existing v1 database** (deployed before the admin-panel rebuild) | `supabase/migrate-v2.sql`, then `migrate-v3.sql`, then `migrate-v4.sql`, then `migrate-v5.sql`, then `storage.sql` |
-   | **Existing v2 database** (has `i18n`/`media` but no `home_sections`) | `supabase/migrate-v3.sql`, then `migrate-v4.sql`, then `migrate-v5.sql`, then `storage.sql` |
-   | **Existing v3 database** (has `home_sections` but no `site_logos`) | `supabase/migrate-v4.sql`, then `migrate-v5.sql` |
-   | **Existing v4 database** (has `site_logos` but no `site_texts`) | `supabase/migrate-v5.sql` |
+   | **Existing v1 database** (deployed before the admin-panel rebuild) | `supabase/migrate-v2.sql`, then `migrate-v3.sql`, then `migrate-v4.sql`, then `migrate-v5.sql`, then `migrate-v6.sql`, then `storage.sql` |
+   | **Existing v2 database** (has `i18n`/`media` but no `home_sections`) | `supabase/migrate-v3.sql`, then `migrate-v4.sql`, then `migrate-v5.sql`, then `migrate-v6.sql`, then `storage.sql` |
+   | **Existing v3 database** (has `home_sections` but no `site_logos`) | `supabase/migrate-v4.sql`, then `migrate-v5.sql`, then `migrate-v6.sql` |
+   | **Existing v4 database** (has `site_logos` but no `site_texts`) | `supabase/migrate-v5.sql`, then `migrate-v6.sql` |
+   | **Existing v5 database** (has `site_texts` but no `page_views`) | `supabase/migrate-v6.sql` |
 
    `migrate-v2.sql` upgrades in place without losing rows you created: it backfills
    the new `i18n`/`media` JSON from the old text columns, then adds the `services`,
@@ -198,8 +208,9 @@ npm run lint      # tsc --noEmit
    after migrating (or uncomment the `update … set status='coming_soon'` line at
    the bottom of the script). `migrate-v5.sql` adds the `site_texts` table +
    `site_texts_public` view (the Website-text manager's store) and the
-   `site_settings.blur_sections` column. All scripts are idempotent — safe to
-   run again.
+   `site_settings.blur_sections` column. `migrate-v6.sql` adds the `page_views`
+   analytics table and its dashboard aggregate views — traffic starts counting
+   the moment it runs. All scripts are idempotent — safe to run again.
 
    Until the migrations run, the deployed site shows its built-in static content
    and the admin shows a "run the migration" notice instead of crashing.

@@ -17,6 +17,7 @@ import AdminPanel from './admin/AdminPanel';
 import RequireAuth from './admin/RequireAuth';
 import { useLang } from './lang';
 import { useSiteStatus } from './lib/useSiteStatus';
+import TrackPageViews from './lib/trackPageViews';
 import { pageTransition } from './motion';
 
 /** The design scrolls to the top on every route change. */
@@ -50,6 +51,7 @@ function PublicSite() {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-white text-ink">
+      <TrackPageViews />
       <Header />
       <main className="flex-1">
         <AnimatePresence mode="wait">

@@ -1,7 +1,8 @@
--- SHAKUR — v5 schema: projects (i18n/media JSON), services, meetings,
+-- SHAKUR — v6 schema: projects (i18n/media JSON), services, meetings,
 -- availability, site_settings (+ v4 status/marquee_speed_s, v5
 -- blur_sections), home_sections (+ home_public view), consultation_requests,
--- media_assets, site_logos, site_texts (+ site_texts_public view).
+-- media_assets, site_logos, site_texts (+ site_texts_public view),
+-- page_views (+ aggregate views — v6 self-hosted analytics).
 -- FULL fresh-install script. Idempotent — safe to re-run.
 -- Run in the Supabase SQL editor, or: psql "$DATABASE_URL" -f supabase/schema.sql
 --
@@ -11,7 +12,8 @@
 --
 -- Upgrading a deployed database? v1 -> v2: supabase/migrate-v2.sql, then
 -- v2 -> v3: supabase/migrate-v3.sql, then v3 -> v4: supabase/migrate-v4.sql
--- (+ migrate-v4-media.sql). This file assumes a fresh install.
+-- (+ migrate-v4-media.sql), then migrate-v5.sql, then migrate-v6.sql.
+-- This file assumes a fresh install.
 
 create extension if not exists "pgcrypto";
 
@@ -1558,3 +1560,53 @@ create or replace view public.site_texts_public as
   where published is not null;
 
 grant select on public.site_texts_public to anon, authenticated;
+
+-- ===========================================================================
+-- page_views — v6 self-hosted analytics (cookieless; nothing personal stored)
+-- ===========================================================================
+-- WRITE-ONLY mailbox for the anon key: the INSERT policy below is the only
+-- policy, so the public key can log a view but never read/change/delete one.
+-- The admin dashboard reads through the aggregate views, granted to
+-- authenticated only (views bypass RLS — hence the explicit revokes).
+create table if not exists public.page_views (
+  id         bigint generated always as identity primary key,
+  path       text not null check (char_length(path) between 1 and 200),
+  referrer   text check (referrer is null or char_length(referrer) <= 200),
+  lang       text check (lang is null or char_length(lang) <= 8),
+  device     text not null default 'desktop' check (device in ('mobile', 'desktop')),
+  visit_id   text not null check (char_length(visit_id) between 8 and 40),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists page_views_created_at_idx
+  on public.page_views (created_at);
+
+alter table public.page_views enable row level security;
+
+drop policy if exists "anyone can log a page view" on public.page_views;
+create policy "anyone can log a page view"
+  on public.page_views for insert
+  to anon, authenticated
+  with check (true);
+
+create or replace view public.page_view_daily as
+  select created_at::date as day,
+         device,
+         count(*)::int as views,
+         count(distinct visit_id)::int as visits
+  from public.page_views
+  where created_at > now() - interval '90 days'
+  group by 1, 2;
+
+create or replace view public.page_view_paths as
+  select created_at::date as day,
+         path,
+         count(*)::int as views
+  from public.page_views
+  where created_at > now() - interval '90 days'
+  group by 1, 2;
+
+revoke all on public.page_view_daily from anon, public;
+revoke all on public.page_view_paths from anon, public;
+grant select on public.page_view_daily to authenticated;
+grant select on public.page_view_paths to authenticated;

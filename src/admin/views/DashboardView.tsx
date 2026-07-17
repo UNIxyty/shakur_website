@@ -125,6 +125,11 @@ export function mergeActivity(events: ActivityEvent[]): ActivityEvent[] {
     .slice(0, 6);
 }
 
+export type TrafficDaily = { day: string; device: string; views: number; visits: number };
+export type TrafficPath = { day: string; path: string; views: number };
+/** 'missing' = pre-migrate-v6 DB (show the run-migration hint, not an error). */
+export type TrafficData = { daily: TrafficDaily[]; paths: TrafficPath[] } | 'missing' | null;
+
 export type DashboardData = {
   /** null = the query failed (card shows an em-dash + "Couldn't load"). */
   projects: { published: number; total: number } | null;
@@ -134,7 +139,75 @@ export type DashboardData = {
   /** created_at ISO strings (last 90 local days); null = chart couldn't load. */
   chartDates: string[] | null;
   activity: ActivityEvent[] | null;
+  traffic: TrafficData;
 };
+
+/** Human label for a tracked path ('/' → 'Home', '/projects/x' → 'Project · x'). */
+export function pathLabel(path: string): string {
+  if (path === '/') return 'Home';
+  const seg = path.split('/').filter(Boolean);
+  const top: Record<string, string> = {
+    projects: 'Projects',
+    services: 'Services',
+    contact: 'Contact',
+    booking: 'Manage booking',
+  };
+  if (seg.length === 1) return top[seg[0]] ?? path;
+  if (seg[0] === 'projects') return `Project · ${seg[1]}`;
+  if (seg[0] === 'services') return `Service · ${seg[1]}`;
+  return path;
+}
+
+/** Aggregate the traffic view rows into the selected range (day keys are local 'YYYY-MM-DD'). */
+export function buildTraffic(
+  data: { daily: TrafficDaily[]; paths: TrafficPath[] },
+  range: Range,
+  now: Date
+): {
+  labels: string[];
+  views: number[];
+  totalViews: number;
+  totalVisits: number;
+  mobileShare: number | null;
+  topPaths: { path: string; views: number }[];
+} {
+  const labels: string[] = [];
+  const index = new Map<string, number>();
+  for (let i = range - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    index.set(dayKey(d), labels.length);
+    labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+  }
+  const views = new Array<number>(labels.length).fill(0);
+  let totalViews = 0;
+  let totalVisits = 0;
+  let mobileViews = 0;
+  for (const row of data.daily) {
+    const i = index.get(row.day.slice(0, 10));
+    if (i === undefined) continue;
+    views[i] += row.views;
+    totalViews += row.views;
+    totalVisits += row.visits;
+    if (row.device === 'mobile') mobileViews += row.views;
+  }
+  const byPath = new Map<string, number>();
+  for (const row of data.paths) {
+    if (!index.has(row.day.slice(0, 10))) continue;
+    byPath.set(row.path, (byPath.get(row.path) ?? 0) + row.views);
+  }
+  const topPaths = [...byPath.entries()]
+    .map(([path, v]) => ({ path, views: v }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 5);
+  return {
+    labels,
+    views,
+    totalViews,
+    totalVisits,
+    mobileShare: totalViews > 0 ? mobileViews / totalViews : null,
+    topPaths,
+  };
+}
 
 type TitledRow = { i18n: { title?: L10n } | null; updated_at: string };
 
@@ -192,6 +265,40 @@ export async function fetchDashboard(client: DashClient, now: Date): Promise<Das
       return null;
     }
   };
+
+  /**
+   * Page-view aggregates (v6). Unlike count()/rows(), a missing view here maps
+   * to 'missing' — the card shows the run-migrate-v6 hint instead of zeros.
+   * page_view_paths is ordered views-desc so PostgREST's row cap keeps the top.
+   */
+  const traffic = (async (): Promise<TrafficData> => {
+    try {
+      const [d, p] = await Promise.all([
+        client
+          .from('page_view_daily')
+          .select('day,device,views,visits')
+          .order('day', { ascending: false })
+          .limit(1000),
+        client
+          .from('page_view_paths')
+          .select('day,path,views')
+          .order('views', { ascending: false })
+          .limit(1000),
+      ]);
+      if (d.error || p.error) {
+        if (isMissingTable(d.error) || isMissingTable(p.error)) return 'missing';
+        console.warn('[dashboard] traffic queries failed', d.error ?? p.error);
+        return null;
+      }
+      return {
+        daily: (d.data ?? []) as TrafficDaily[],
+        paths: (p.data ?? []) as TrafficPath[],
+      };
+    } catch (err) {
+      console.warn('[dashboard] traffic queries failed', err);
+      return null;
+    }
+  })();
 
   const [
     projTotal,
@@ -297,6 +404,7 @@ export async function fetchDashboard(client: DashClient, now: Date): Promise<Das
   }
 
   return {
+    traffic: await traffic,
     projects:
       projTotal === null || projPublished === null
         ? null
@@ -339,7 +447,15 @@ function smoothPath(pts: [number, number][], yMin: number, yMax: number): string
   return d;
 }
 
-function RequestsChart({ labels, values }: { labels: string[]; values: number[] }) {
+function RequestsChart({
+  labels,
+  values,
+  unit = 'request',
+}: {
+  labels: string[];
+  values: number[];
+  unit?: string;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(720);
   const [hover, setHover] = useState<number | null>(null);
@@ -400,7 +516,7 @@ function RequestsChart({ labels, values }: { labels: string[]; values: number[] 
             viewBox={`0 0 ${width} ${height}`}
             preserveAspectRatio="none"
             role="img"
-            aria-label="New requests per day"
+            aria-label={`New ${unit}s per day`}
             onMouseMove={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const x = ((e.clientX - rect.left) / rect.width) * width;
@@ -461,7 +577,7 @@ function RequestsChart({ labels, values }: { labels: string[]; values: number[] 
               }}
             >
               <span style={{ color: '#A8A29E' }}>{labels[hover]}</span> · {values[hover]}{' '}
-              {values[hover] === 1 ? 'request' : 'requests'}
+              {values[hover] === 1 ? unit : `${unit}s`}
             </div>
           )}
         </div>
@@ -557,6 +673,7 @@ export default function DashboardView() {
             consultations: null,
             chartDates: null,
             activity: null,
+            traffic: null,
           });
         }
         return;
@@ -573,6 +690,13 @@ export default function DashboardView() {
   const loadedAt = useMemo(() => new Date(), [data]);
   const series = useMemo(
     () => (data?.chartDates ? buildSeries(data.chartDates, range, loadedAt) : null),
+    [data, range, loadedAt]
+  );
+  const traffic = useMemo(
+    () =>
+      data?.traffic && data.traffic !== 'missing'
+        ? buildTraffic(data.traffic, range, loadedAt)
+        : null,
     [data, range, loadedAt]
   );
 
@@ -745,6 +869,148 @@ export default function DashboardView() {
           <RequestsChart labels={series.labels} values={series.values} />
         ) : (
           <div style={chartPlaceholder}>No requests in this period</div>
+        )}
+      </div>
+
+      {/* site traffic (v6 — self-hosted, cookieless page views) */}
+      <div style={{ ...card, padding: '22px 24px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 10,
+            flexWrap: 'wrap',
+            marginBottom: 16,
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>Site traffic</h2>
+          <span style={{ fontSize: 13, color: '#A8A29E' }}>Last {range} days</span>
+        </div>
+        {loading ? (
+          <div className="adm-skel" style={{ height: 250, borderRadius: 10 }} />
+        ) : data.traffic === 'missing' ? (
+          <div style={chartPlaceholder}>
+            Run supabase/migrate-v6.sql to start collecting page views
+          </div>
+        ) : data.traffic === null ? (
+          <div style={chartPlaceholder}>Couldn't load</div>
+        ) : traffic && traffic.totalViews > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 14,
+              }}
+            >
+              {[
+                { label: 'Page views', value: traffic.totalViews.toLocaleString('en-US') },
+                { label: 'Unique visits', value: traffic.totalVisits.toLocaleString('en-US') },
+                {
+                  label: 'Mobile share',
+                  value:
+                    traffic.mobileShare === null
+                      ? '—'
+                      : `${Math.round(traffic.mobileShare * 100)}%`,
+                },
+                {
+                  label: 'Top page',
+                  value: traffic.topPaths[0] ? pathLabel(traffic.topPaths[0].path) : '—',
+                },
+              ].map((tile) => (
+                <div
+                  key={tile.label}
+                  style={{
+                    background: '#FAF9F7',
+                    border: '1px solid #F2F1EF',
+                    borderRadius: 11,
+                    padding: '14px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 3,
+                  }}
+                >
+                  <span style={{ fontSize: 12, color: '#A8A29E' }}>{tile.label}</span>
+                  <span
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 600,
+                      letterSpacing: -0.4,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {tile.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <RequestsChart labels={traffic.labels} values={traffic.views} unit="view" />
+            {traffic.topPaths.length > 0 && (
+              <div>
+                <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600 }}>Top pages</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {traffic.topPaths.map((p) => (
+                    <div
+                      key={p.path}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                    >
+                      <span
+                        style={{
+                          width: 190,
+                          flexShrink: 0,
+                          fontSize: 13,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                        title={p.path}
+                      >
+                        {pathLabel(p.path)}
+                      </span>
+                      <span
+                        style={{
+                          flex: 1,
+                          height: 8,
+                          background: '#F2F1EF',
+                          borderRadius: 4,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: 'block',
+                            height: '100%',
+                            borderRadius: 4,
+                            background: '#FB8500',
+                            width: `${Math.max(
+                              4,
+                              Math.round((p.views / traffic.topPaths[0].views) * 100)
+                            )}%`,
+                          }}
+                        />
+                      </span>
+                      <span
+                        style={{
+                          width: 52,
+                          flexShrink: 0,
+                          textAlign: 'right',
+                          fontSize: 13,
+                          color: '#54504D',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
+                      >
+                        {p.views.toLocaleString('en-US')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={chartPlaceholder}>No page views in this period — collecting…</div>
         )}
       </div>
 
