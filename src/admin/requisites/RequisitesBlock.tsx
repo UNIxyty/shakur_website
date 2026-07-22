@@ -28,9 +28,22 @@ const CARD = '#FCCC2C';
 const ACCENT = '#FB8500';
 const LABEL_INK = '#6B5320';
 
+/**
+ * Cache-busting token for the brand files. **Bump it whenever you replace
+ * either SVG.**
+ *
+ * These two are the only non-fingerprinted files the app requests by a fixed
+ * name, and Cloudflare sits in front of the origin: while the lockup was still
+ * missing, the CDN cached its 404 under the old `immutable, max-age=1y` header
+ * and went on serving that 404 for a year afterwards — the origin was fixed and
+ * the page still showed the fallback. A version token gives a new cache key and
+ * sidesteps a stuck edge entry without needing a dashboard purge.
+ */
+const LOGO_VERSION = '2';
+
 /** The lockup, with the wordmark as a safety net if the file ever goes missing. */
-export const LOGO_SRC = '/assets/shakur_full_logo.svg';
-export const LOGO_FALLBACK_SRC = '/assets/shakur_wordmark.svg';
+export const LOGO_SRC = `/assets/shakur_full_logo.svg?v=${LOGO_VERSION}`;
+export const LOGO_FALLBACK_SRC = `/assets/shakur_wordmark.svg?v=${LOGO_VERSION}`;
 const LOGO_W = 238;
 /** Slot height = the lockup's own aspect (viewBox 163 × 110) at LOGO_W, so the
  *  fallback occupies exactly the same space and nothing reflows either way. */

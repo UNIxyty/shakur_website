@@ -97,15 +97,19 @@ form) that stores the request and emails the admin.
   163 × 110). If it is ever missing the blocks fall back to
   `shakur_wordmark.svg` and the admin page says so, so the page can never
   render a broken image.
-  > Those two files are the only **non-fingerprinted** things under `/assets/`
-  > — the app asks for them by a fixed name — so `nginx.conf` gives them a
-  > 5-minute cache while Vite's hashed output keeps `immutable`. The same block
-  > also drops `always` from the `/assets/` Cache-Control header: with it,
-  > nginx put `immutable, max-age=31536000` on **404s** too, so a browser that
-  > loaded the page before the logo was uploaded cached "this file does not
-  > exist" for a year and kept showing the fallback long after deploy. The
-  > server-side PNG/PDF renderer uses a fresh browser each time and so was
-  > unaffected — which is what made the two disagree.
+  > **Replacing either brand SVG needs `LOGO_VERSION` in `RequisitesBlock.tsx`
+  > bumped.** They are the only non-fingerprinted files the app requests by a
+  > fixed name, so they carry a `?v=` token instead — and they need one:
+  > `/assets/` used to send `Cache-Control: immutable, max-age=31536000` with
+  > `always`, which put it on **404s** too, so both browsers *and Cloudflare*
+  > cached "this file does not exist" for a year and kept serving that 404 long
+  > after the real logo was deployed (`cf-cache-status: HIT` on a 404). The
+  > server-side PNG/PDF renderer starts a fresh browser and talks to the origin
+  > directly, so it showed the real logo while the on-page preview and the
+  > Print view did not — that mismatch is the fingerprint of this bug.
+  > `nginx.conf` no longer marks error responses immutable and gives the two
+  > brand files a 5-minute cache; the `?v=` token is what unsticks an edge
+  > entry that is already poisoned.
 - **Settings** — profile & password, site settings (title, tagline, contact,
   announcement bar, plus in v4: the **Live / Coming-soon status switch** with
   confirmation + amber warning banner, and the **logo carousel manager** — add
