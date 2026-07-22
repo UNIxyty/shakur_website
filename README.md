@@ -77,6 +77,28 @@ form) that stores the request and emails the admin.
   timezone, block-out dates, live open-slot preview. Drives the public booking flow.
 - **Meetings** — Upcoming / Past / Canceled tabs, search, detail modal with notes,
   cancel + reschedule (attendee is emailed through the server when configured).
+- **Useful files** — the company requisites (*rekvizīti*) as a
+  download-or-print sheet, in both sizes the design defines: **full**
+  595 × 863.5 px and **compact** 577 × 503 px. Each has PDF, PNG and Print.
+  Also the quick link to the worker access-card app.
+  The sizes are the deliverable, so the artefacts are rendered **server-side
+  with Playwright** rather than in the browser: `GET
+  /api/admin/requisites/<full|compact>.<png|pdf>` screenshots the
+  `/requisites-print` route in headless Chromium, which honours
+  `@page { size }` and `print-color-adjust: exact` natively. The PDF page box
+  is the artwork at its exact pixel size (595 × 863.5 px = 157.5 × 228.6 mm),
+  so it prints on A4 at 100 % with margins.
+  One React component (`src/admin/requisites/RequisitesBlock.tsx`) is the
+  single source of truth for the preview, the print route and the renderer, so
+  the three cannot drift. `/requisites-print` sits outside `RequireAuth` on
+  purpose — the API renders it from inside the Docker network where no browser
+  session exists — and carries only the company's public invoice details.
+  > The header currently uses the SHAKUR **wordmark as a placeholder**: the
+  > full lockup SVG exceeds the design tool's 256 KiB read limit and the
+  > available PNGs are 206 × 137, far too coarse to print. The layout reserves
+  > the real lockup's exact slot, so dropping
+  > `public/assets/shakur_full_logo.svg` in and redeploying picks it up with
+  > no other change. The admin page shows a banner until then.
 - **Settings** — profile & password, site settings (title, tagline, contact,
   announcement bar, plus in v4: the **Live / Coming-soon status switch** with
   confirmation + amber warning banner, and the **logo carousel manager** — add
@@ -278,6 +300,21 @@ feature switches off gracefully without it):
 The public origin is **never hardcoded** — changing domains is an `.env` edit
 (`PUBLIC_BASE_URL` restart-only, `VITE_PUBLIC_BASE_URL` needs a rebuild).
 
+Worker access cards (`cards-api` service only — see
+`/srv/shakur-cards/README.md` § "Single sign-on"):
+
+| Var | Purpose |
+| --- | --- |
+| `CARDS_AUTH_MODE` | `sso` (Supabase SSO shared with this site) or `password` (the cards app's own form). Restart-only. |
+| `CARDS_ALLOWED_EMAILS` | **GDPR access-control point.** Email allowlist for the cards app, alongside Supabase `app_metadata.cards_access`. Being a signed-in site user is deliberately not enough. |
+| `CARDS_ADMIN_EMAILS` | who becomes a cards administrator on first SSO sign-in |
+| `CARDS_SSO_SIGNIN_URL` | where the cards app sends people to sign in (default `https://shakurs.com/admin/login`) |
+| `CARDS_SSO_SESSION_HOURS` | hard ceiling on a cards session's age, so revoking `cards_access` reaches active users (default 12) |
+
+`cards-api` also receives `SUPABASE_URL` and — deliberately — only the **anon**
+key (as `SUPABASE_ANON_KEY`), which is all it needs to ask Supabase to validate
+a presented token. The `service_role` key is never given to that container.
+
 ## Server API (`server/`)
 
 Node 22 + Express, proxied by nginx at `/api/`:
@@ -346,8 +383,11 @@ response timeout — prefer reasonably sized clips.
 
 ## Deploy — Docker Compose + Cloudflare Tunnel
 
-Three services: `web` (nginx, SPA + `/api/` proxy, loopback-only :3000), `api`
-(internal only, not published), `tunnel` (cloudflared, the sole public path in).
+Five services. Three are the site: `web` (nginx, SPA + `/api/` proxy,
+loopback-only :3000), `api` (internal only, not published), `tunnel`
+(cloudflared, the sole public path in). Two are the **worker access-card app**,
+a separate application deployed from here so that one command brings up the
+whole estate — see "Worker access cards" below.
 
 ```bash
 cloudflared tunnel login          # one-time, interactive
@@ -358,10 +398,44 @@ docker compose up -d --build
 Checks:
 
 ```bash
-docker compose ps                          # web + api healthy
-curl http://127.0.0.1:3000/api/health      # {"ok":true} through the nginx proxy
-curl -I https://shakur.verxyl.com          # served through the tunnel
+docker compose ps                              # five containers healthy
+curl http://127.0.0.1:3000/api/health          # {"ok":true} through the nginx proxy
+curl -I https://shakurs.com                    # the site, through the tunnel
+curl http://127.0.0.1:8791/api/health          # the cards API, through its own nginx
+curl -I https://cards.shakurs.com              # the cards app, through the same tunnel
 ```
+
+### Worker access cards (`cards.shakurs.com`)
+
+The cards app's **code lives in `/srv/shakur-cards`** and keeps its own git
+history, its own SPEC and its own build pipeline. Only its deployment lives
+here: `cards-web` and `cards-api` in `docker-compose.yml` build straight from
+that directory (absolute build contexts).
+
+- `cards-api` bind-mounts `/srv/shakur-cards/data` and runs as uid `997:981`
+  (the host's `shakurcards` user), so file ownership is unchanged and the
+  existing `shakur-cards-backup.timer` keeps snapshotting it nightly at 03:35.
+  A bind mount rather than a named volume on purpose: the container opened the
+  same SQLite file the retired host service had been using, so the cutover
+  moved no bytes and could not lose a row.
+- `cards-web` publishes `127.0.0.1:8791` for debugging only. Its nginx resolves
+  the `cards-api` upstream lazily, so `docker compose up -d --build` cannot
+  fail on start-up ordering — with the API down it still serves the app shell
+  and returns 502 for `/api/` alone.
+- `tunnel` depends on `cards-web` with `service_started`, **not**
+  `service_healthy`: a broken cards container must never be able to keep
+  shakurs.com off the internet.
+- Sign-in is **Supabase SSO shared with this site** — see
+  `/srv/shakur-cards/README.md` § "Single sign-on" for the full model,
+  including the `cards_access` flag that is the GDPR access-control point for
+  workers' personal codes and photographs. The `CARDS_*` variables in `.env`
+  configure it; flipping `CARDS_AUTH_MODE` needs `docker compose up -d
+  cards-api`, no rebuild.
+- This side of the link is `src/lib/ssoCookie.ts`, registered from
+  `src/lib/supabase.ts`: it mirrors the Supabase **access token** — never the
+  refresh token — into a `shakur_sso` cookie on `.shakurs.com`. `/admin/login`
+  honours `?redirect=` back to any `https://*.shakurs.com` URL, which is how
+  the cards app sends people here and gets them back.
 
 > ⚠️ Rebuild (not just restart) after changing any `VITE_*` var — Vite bakes them
 > into the bundle. Server vars only need `docker compose up -d` to recreate `api`.

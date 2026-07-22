@@ -19,6 +19,11 @@ const INK = '#160C00';
 const MUTED = '#54504D';
 const LINE = '#E7E5E4';
 const CARDS_URL = 'https://cards.shakurs.com';
+/** Every tile on this page is this wide, so the three sit in one row. */
+const TILE_W = 300;
+/** Inside the tile: minus 18px padding each side and the 1px border (Tailwind's
+ *  preflight makes every box border-box, so the declared width is the outside). */
+const TILE_INNER = TILE_W - 2 * 18 - 2;
 
 type Busy = { variant: RequisitesVariant; ext: 'png' | 'pdf' } | null;
 
@@ -56,8 +61,8 @@ function VariantCard({
   const [busy, setBusy] = useState<Busy>(null);
   const meta = REQUISITES_SIZES[variant];
 
-  // Preview scaled to fit the admin column; the block itself stays exact size.
-  const previewW = 300;
+  // Preview scaled to fit the tile; the block itself stays exact size.
+  const previewW = TILE_INNER;
   const scale = previewW / meta.w;
 
   const run = async (ext: 'png' | 'pdf') => {
@@ -78,6 +83,9 @@ function VariantCard({
         borderRadius: 14,
         background: '#fff',
         padding: 18,
+        // Fixed: without it the long print caveat below stretches the tile to
+        // the full column and pushes the other tiles onto their own rows.
+        width: TILE_W,
         display: 'flex',
         flexDirection: 'column',
         gap: 14,
@@ -201,7 +209,7 @@ export default function UsefulFilesView() {
             borderRadius: 14,
             background: '#fff',
             padding: 18,
-            width: 300,
+            width: TILE_W,
             textDecoration: 'none',
             display: 'flex',
             flexDirection: 'column',

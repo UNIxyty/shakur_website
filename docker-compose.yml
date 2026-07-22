@@ -75,6 +75,81 @@ services:
       retries: 3
 
   # ---------------------------------------------------------------------------
+  # Worker access cards (cards.shakurs.com) — a SEPARATE application that lives
+  # in its own repo at /srv/shakur-cards and is only *deployed* from here, so
+  # one `docker compose up -d --build` brings up the whole estate.
+  #
+  # Two tiers, mirroring the site: nginx serving the built app, and an Express +
+  # SQLite API it proxies /api/ to. Neither is published publicly — the tunnel
+  # below is the only way in.
+  #
+  # The build context is an absolute path outside this project on purpose: the
+  # cards repo keeps its own git history, its own patch pipeline and its own
+  # SPEC.md. Nothing here reaches into it except the two Dockerfiles.
+  # ---------------------------------------------------------------------------
+  cards-web:
+    build:
+      context: /srv/shakur-cards
+      dockerfile: Dockerfile.web
+    image: shakur-cards-web
+    container_name: shakur-cards-web
+    restart: unless-stopped
+    expose:
+      - '80'
+    # Loopback only, for debugging on the box. NOT 8789: the pre-container host
+    # nginx vhost holds that port until it is retired, and a collision there
+    # would make `docker compose up -d --build` fail for the whole estate.
+    ports:
+      - '127.0.0.1:8791:80'
+    depends_on:
+      cards-api:
+        # nginx resolves the cards-api upstream lazily (resolver + variable in
+        # /srv/shakur-cards/docker/nginx.conf), so started is enough.
+        condition: service_started
+
+  cards-api:
+    build:
+      context: /srv/shakur-cards
+      dockerfile: Dockerfile.api
+    image: shakur-cards-api
+    container_name: shakur-cards-api-ctr
+    restart: unless-stopped
+    # The bind mount below is the LIVE data directory, owned by the host's
+    # `shakurcards` user (uid 997, gid 981). Running as that uid keeps every
+    # file the container writes owned exactly as before, so the existing
+    # shakur-cards-backup.timer keeps snapshotting it with no changes.
+    user: '997:981'
+    environment:
+      NODE_ENV: production
+      PORT: '8790'
+      # The host install binds loopback; in here nginx is a different container.
+      # Still unpublished, so only the compose network can reach it.
+      BIND_HOST: 0.0.0.0
+      SHAKUR_DATA_DIR: /app/data
+      # 'sso' = sign in with the shakurs.com Supabase account; 'password' = the
+      # app's own built-in form. Both code paths are present; this picks one.
+      CARDS_AUTH_MODE: ${CARDS_AUTH_MODE:-password}
+      # Used ONLY to verify a presented access token server-side. The anon key
+      # is public by design (it is already in the site's JS bundle); the
+      # service_role key is deliberately NOT given to this container.
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
+      # WHO MAY READ WORKERS' PERSONAL CODES AND PHOTOS. See the GDPR note in
+      # /srv/shakur-cards/README.md before changing either of these.
+      CARDS_ALLOWED_EMAILS: ${CARDS_ALLOWED_EMAILS:-}
+      CARDS_ADMIN_EMAILS: ${CARDS_ADMIN_EMAILS:-}
+      CARDS_SSO_SIGNIN_URL: ${CARDS_SSO_SIGNIN_URL:-https://shakurs.com/admin/login}
+    volumes:
+      # A BIND MOUNT, not a named volume, and deliberately so:
+      #   * the cutover is zero-copy — the container opens the very database the
+      #     host service was using, so no export/import step can lose a row;
+      #   * scripts/backup.sh and its systemd timer keep working untouched;
+      #   * a human can still run sqlite3 against it without docker.
+      - /srv/shakur-cards/data:/app/data
+    expose:
+      - '8790'
+
+  # ---------------------------------------------------------------------------
   # Cloudflare Tunnel: publishes web:3000 at https://shakur.verxyl.com
   #
   # CLI-managed (named tunnel + credentials file), no dashboard token needed.
@@ -95,6 +170,11 @@ services:
         # Wait for nginx to answer its healthcheck before advertising the origin,
         # so the tunnel never briefly serves 502s on a fresh deploy.
         condition: service_healthy
+      cards-web:
+        # started, NOT healthy, on purpose: the cards app must never be able to
+        # keep the main site off the internet. A slow or broken cards container
+        # costs cards.shakurs.com a few 502s, nothing more.
+        condition: service_started
 
 volumes:
   # Local-first Home-CMS uploads: api writes /data/media, web serves /srv/media.

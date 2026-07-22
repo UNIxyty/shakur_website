@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import { safeRedirectTarget, writeSsoCookie } from '../lib/ssoCookie';
 import SupabaseMissing from './SupabaseMissing';
 
 const inputStyle: React.CSSProperties = {
@@ -17,6 +18,7 @@ const inputStyle: React.CSSProperties = {
 /** ShakurAdminLogin.dc.html */
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,13 +27,31 @@ export default function AdminLogin() {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState('');
 
+  // Where to go once signed in. cards.shakurs.com sends people here with
+  // ?redirect=<its own URL>; safeRedirectTarget refuses anything that is not
+  // https on one of our subdomains, so this cannot become an open redirect.
+  const redirect = safeRedirectTarget(params.get('redirect'));
+
+  /** Mirror the session into the shared cookie before leaving this origin —
+   *  onAuthStateChange would do it too, but a full-page navigation must not
+   *  race it. */
+  const finish = (session: { access_token?: string; expires_at?: number } | null) => {
+    if (redirect) {
+      writeSsoCookie(session ?? null);
+      window.location.replace(redirect);
+      return;
+    }
+    navigate('/admin', { replace: true });
+  };
+
   // Already signed in? Skip the form.
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate('/admin', { replace: true });
+      if (data.session) finish(data.session);
     });
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, redirect]);
 
   useEffect(() => {
     if (!toast) return;
@@ -47,7 +67,7 @@ export default function AdminLogin() {
     setBusy(true);
     setError('');
 
-    const { error: authError } = await client.auth.signInWithPassword({
+    const { data, error: authError } = await client.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -57,7 +77,7 @@ export default function AdminLogin() {
       setError('Invalid email or password');
       return;
     }
-    navigate('/admin', { replace: true });
+    finish(data.session);
   };
 
   return (

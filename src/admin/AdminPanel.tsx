@@ -163,9 +163,11 @@ export default function AdminPanel() {
 
   const view: ViewKey = useMemo(() => {
     const seg = location.pathname.replace(/^\/admin\/?/, '').split('/')[0];
-    return (['home', 'texts', 'projects', 'services', 'availability', 'meetings', 'settings'].includes(seg)
-      ? seg
-      : 'dashboard') as ViewKey;
+    // Derived from VIEW_META rather than a hand-kept list: with a literal list,
+    // a newly added view renders its content while the page header and the
+    // active nav pill still say "Dashboard" — which is exactly what
+    // /admin/useful-files did.
+    return (Object.prototype.hasOwnProperty.call(VIEW_META, seg) ? seg : 'dashboard') as ViewKey;
   }, [location.pathname]);
 
   const [collapsed, setCollapsed] = useState(false);

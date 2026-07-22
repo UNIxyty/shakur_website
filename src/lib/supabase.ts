@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { ProjectRow, ServiceRow } from './db';
+import { clearSsoCookie, writeSsoCookie } from './ssoCookie';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -14,6 +15,22 @@ export const isSupabaseConfigured = Boolean(url && anonKey);
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url as string, anonKey as string)
   : null;
+
+/**
+ * Keep the `.shakurs.com` SSO cookie in step with this session — that is what
+ * lets cards.shakurs.com sign you in without a second password.
+ *
+ * onAuthStateChange fires on INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED and
+ * SIGNED_OUT, so the cookie is refreshed roughly hourly alongside the token
+ * and is cleared the moment you sign out here. Session storage itself is
+ * untouched (still localStorage): this is a mirror, never the source of truth.
+ */
+if (supabase && typeof document !== 'undefined') {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || !session) clearSsoCookie();
+    else writeSsoCookie(session);
+  });
+}
 
 // Row types live in db.ts; re-exported so existing imports keep working.
 export type {
