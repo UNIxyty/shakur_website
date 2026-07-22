@@ -28,12 +28,12 @@ const CARD = '#FCCC2C';
 const ACCENT = '#FB8500';
 const LABEL_INK = '#6B5320';
 
-/** The real lockup; the wordmark stands in until it is supplied (see below). */
+/** The lockup, with the wordmark as a safety net if the file ever goes missing. */
 export const LOGO_SRC = '/assets/shakur_full_logo.svg';
 export const LOGO_FALLBACK_SRC = '/assets/shakur_wordmark.svg';
 const LOGO_W = 238;
-/** Slot height = the real lockup's aspect (viewBox 163 × 110) at LOGO_W, so
- *  dropping the real file in later changes nothing about the layout. */
+/** Slot height = the lockup's own aspect (viewBox 163 × 110) at LOGO_W, so the
+ *  fallback occupies exactly the same space and nothing reflows either way. */
 const LOGO_SLOT_H = Math.round((LOGO_W * 110) / 163 * 10) / 10; // 160.6
 
 const lbl: CSSProperties = {
@@ -104,8 +104,8 @@ function Row({ k, v, mono }: { k: string; v: ReactNode; mono?: boolean }) {
 }
 
 /**
- * The lockup. `onError` swaps to the wordmark, so the moment a real
- * public/assets/shakur_full_logo.svg exists it is picked up with no code change.
+ * The lockup. `onError` swaps to the wordmark so a missing or unreadable file
+ * degrades to something on-brand instead of a broken-image icon.
  */
 function Logo({ onFallback }: { onFallback?: () => void }) {
   const [src, setSrc] = useState(LOGO_SRC);

@@ -1,9 +1,15 @@
 /**
- * Admin → Useful files (Полезные файлы).
+ * Admin → Useful files.
  *
  * Both requisites variants with Download (PNG/PDF) + Print, and a quick link to
  * the cards app. The downloads are rendered server-side by Playwright against
  * /requisites-print, so what you download is pixel-identical to what you print.
+ *
+ * Layout: every tile is the SAME width and the SAME height. The two requisites
+ * blocks have very different aspect ratios (595 × 863.5 vs 577 × 503), so each
+ * preview is scaled to *fit* a shared fixed-size stage rather than to fill the
+ * tile's width — otherwise the tall one makes its tile half again as tall as
+ * its neighbour and the row looks accidental.
  */
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -19,11 +25,17 @@ const INK = '#160C00';
 const MUTED = '#54504D';
 const LINE = '#E7E5E4';
 const CARDS_URL = 'https://cards.shakurs.com';
-/** Every tile on this page is this wide, so the three sit in one row. */
-const TILE_W = 300;
-/** Inside the tile: minus 18px padding each side and the 1px border (Tailwind's
- *  preflight makes every box border-box, so the declared width is the outside). */
-const TILE_INNER = TILE_W - 2 * 18 - 2;
+
+/** One tile geometry for all three, so the row is a row and not a staircase. */
+const TILE_W = 340;
+const TILE_PAD = 18;
+/** Tailwind's preflight makes every box border-box, so the declared width is
+ *  the outside edge: subtract the padding and the 1px border for the content. */
+const TILE_INNER = TILE_W - 2 * TILE_PAD - 2;
+/** Tall enough for the 595 × 863.5 block to be legible; both fit inside it. */
+const STAGE_H = 330;
+/** Header = two text lines at a fixed height, so the stages line up too. */
+const HEAD_H = 42;
 
 type Busy = { variant: RequisitesVariant; ext: 'png' | 'pdf' } | null;
 
@@ -49,7 +61,59 @@ async function downloadRendered(variant: RequisitesVariant, ext: 'png' | 'pdf') 
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-function VariantCard({
+/** The shared tile shell — the thing that makes the row symmetrical. */
+function Tile({
+  title,
+  subtitle,
+  stage,
+  footer,
+}: {
+  title: string;
+  subtitle: string;
+  stage: React.ReactNode;
+  footer: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        width: TILE_W,
+        border: `1px solid ${LINE}`,
+        borderRadius: 14,
+        background: '#fff',
+        padding: TILE_PAD,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+      }}
+    >
+      <div style={{ height: HEAD_H }}>
+        <div style={{ font: `700 14px ${FONT}`, color: INK }}>{title}</div>
+        <div style={{ font: `500 12px ${FONT}`, color: MUTED, marginTop: 3 }}>{subtitle}</div>
+      </div>
+
+      <div
+        style={{
+          height: STAGE_H,
+          borderRadius: 10,
+          background: '#F5F4F3',
+          border: `1px solid ${LINE}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        {stage}
+      </div>
+
+      {/* Fixed height, not just flex: a ghost button is a few px shorter than a
+          primary one, which was enough to leave one tile 4px out of line. */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', height: 45 }}>{footer}</div>
+    </div>
+  );
+}
+
+function VariantTile({
   variant,
   onError,
   onLogoFallback,
@@ -61,9 +125,10 @@ function VariantCard({
   const [busy, setBusy] = useState<Busy>(null);
   const meta = REQUISITES_SIZES[variant];
 
-  // Preview scaled to fit the tile; the block itself stays exact size.
-  const previewW = TILE_INNER;
-  const scale = previewW / meta.w;
+  // Scale to FIT the stage — the limiting dimension wins — so the tall variant
+  // and the wide one occupy the same box. The block itself stays exact size;
+  // only the preview is transformed.
+  const scale = Math.min(TILE_INNER / meta.w, STAGE_H / meta.h);
 
   const run = async (ext: 'png' | 'pdf') => {
     setBusy({ variant, ext });
@@ -77,56 +142,94 @@ function VariantCard({
   };
 
   return (
+    <Tile
+      title={meta.label}
+      subtitle={meta.note}
+      stage={
+        <div
+          style={{
+            width: meta.w * scale,
+            height: meta.h * scale,
+            boxShadow: '0 6px 20px -8px rgba(22,12,0,.45)',
+          }}
+        >
+          <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+            <RequisitesBlock variant={variant} shadow={false} onLogoFallback={onLogoFallback} />
+          </div>
+        </div>
+      }
+      footer={
+        <>
+          <PrimaryBtn onClick={() => run('pdf')} disabled={!!busy}>
+            {busy?.ext === 'pdf' ? <Spinner /> : null} PDF
+          </PrimaryBtn>
+          <GhostBtn onClick={() => run('png')}>
+            {busy?.ext === 'png' ? <Spinner /> : null} PNG
+          </GhostBtn>
+          <GhostBtn
+            onClick={() => window.open(`/requisites-print?v=${variant}&print=1`, '_blank', 'noopener')}
+          >
+            Print
+          </GhostBtn>
+        </>
+      }
+    />
+  );
+}
+
+function CardsTile() {
+  return (
+    <Tile
+      title="Worker access cards"
+      subtitle="cards.shakurs.com"
+      stage={
+        <div style={{ textAlign: 'center', padding: '0 22px' }}>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 14,
+              background: '#FCCC2C',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+            }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth={1.8}>
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <circle cx="9" cy="11" r="2" />
+              <path d="M5 17c1.2-2 2.6-3 4-3s2.8 1 4 3M15 9h4M15 13h4" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div style={{ font: `500 13px/1.6 ${FONT}`, color: MUTED }}>
+            Print worker access-card stickers. You are signed in there automatically with this
+            same SHAKUR account — no second password.
+          </div>
+        </div>
+      }
+      footer={
+        <GhostBtn onClick={() => window.open(CARDS_URL, '_blank', 'noopener')}>
+          Open cards app →
+        </GhostBtn>
+      }
+    />
+  );
+}
+
+function Notice({ children }: { children: React.ReactNode }) {
+  return (
     <div
       style={{
-        border: `1px solid ${LINE}`,
-        borderRadius: 14,
-        background: '#fff',
-        padding: 18,
-        // Fixed: without it the long print caveat below stretches the tile to
-        // the full column and pushes the other tiles onto their own rows.
-        width: TILE_W,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
+        border: '1px solid #F2D0C6',
+        background: '#FDF3F0',
+        borderRadius: 12,
+        padding: '12px 14px',
+        font: `500 12.5px/1.55 ${FONT}`,
+        color: '#8A3D24',
       }}
     >
-      <div>
-        <div style={{ font: `700 14px ${FONT}`, color: INK }}>{meta.label}</div>
-        <div style={{ font: `500 12px ${FONT}`, color: MUTED, marginTop: 2 }}>{meta.note}</div>
-      </div>
-
-      <div
-        style={{
-          width: previewW,
-          height: meta.h * scale,
-          overflow: 'hidden',
-          alignSelf: 'center',
-          borderRadius: 6,
-        }}
-      >
-        <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-          <RequisitesBlock variant={variant} shadow={false} onLogoFallback={onLogoFallback} />
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <PrimaryBtn onClick={() => run('pdf')} disabled={!!busy}>
-          {busy?.ext === 'pdf' ? <Spinner /> : null} PDF
-        </PrimaryBtn>
-        <GhostBtn onClick={() => run('png')}>{busy?.ext === 'png' ? <Spinner /> : null} PNG</GhostBtn>
-        <GhostBtn
-          onClick={() => window.open(`/requisites-print?v=${variant}&print=1`, '_blank', 'noopener')}
-        >
-          Print
-        </GhostBtn>
-      </div>
-
-      <div style={{ font: `500 11.5px/1.5 ${FONT}`, color: MUTED }}>
-        Printing: set <strong>Margins: None</strong>, <strong>Background graphics: ON</strong>,{' '}
-        <strong>Scale: 100%</strong> — the yellow field is printed colour, so with background
-        graphics off the sheet comes out blank.
-      </div>
+      {children}
     </div>
   );
 }
@@ -139,7 +242,7 @@ export default function UsefulFilesView() {
   // previews resolve from cache.
   useEffect(() => {
     let alive = true;
-    fetch(LOGO_SRC, { method: 'HEAD' })
+    fetch(LOGO_SRC, { method: 'HEAD', cache: 'no-cache' })
       .then((r) => {
         if (alive && !r.ok) setLogoMissing(true);
       })
@@ -152,94 +255,55 @@ export default function UsefulFilesView() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, paddingBottom: 40 }}>
       {logoMissing && (
-        <div
-          style={{
-            border: '1px solid #F2D0C6',
-            background: '#FDF3F0',
-            borderRadius: 12,
-            padding: '12px 14px',
-            font: `500 12.5px/1.55 ${FONT}`,
-            color: '#8A3D24',
-          }}
-        >
-          <strong>Temporary placeholder logo.</strong> The full SHAKUR lockup could not be
-          retrieved (the source SVG exceeds the design tool's 256&nbsp;KiB read limit, and the
-          available PNGs are 206×137 — far too low-resolution to print). These blocks currently use
-          the wordmark. To fix permanently, drop the real file at{' '}
+        <Notice>
+          <strong>Logo not found.</strong> These blocks are falling back to the SHAKUR wordmark.
+          Put the full lockup at{' '}
           <code style={{ background: '#fff', padding: '1px 5px', borderRadius: 4 }}>
             public/assets/shakur_full_logo.svg
           </code>{' '}
           and redeploy — the layout reserves its exact slot, so nothing else moves.
-        </div>
+        </Notice>
       )}
 
-      {error && (
-        <div
-          style={{
-            border: '1px solid #F2D0C6',
-            background: '#FDF3F0',
-            borderRadius: 12,
-            padding: '12px 14px',
-            font: `500 12.5px/1.55 ${FONT}`,
-            color: '#8A3D24',
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <Notice>{error}</Notice>}
 
-      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <VariantCard
-          variant="full"
-          onError={setError}
-          onLogoFallback={() => setLogoMissing(true)}
-        />
-        <VariantCard
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(auto-fill, ${TILE_W}px)`,
+          gap: 18,
+          alignItems: 'start',
+        }}
+      >
+        <VariantTile variant="full" onError={setError} onLogoFallback={() => setLogoMissing(true)} />
+        <VariantTile
           variant="compact"
           onError={setError}
           onLogoFallback={() => setLogoMissing(true)}
         />
+        <CardsTile />
+      </div>
 
-        <a
-          href={CARDS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            border: `1px solid ${LINE}`,
-            borderRadius: 14,
-            background: '#fff',
-            padding: 18,
-            width: TILE_W,
-            textDecoration: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: 10,
-              background: '#FCCC2C',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth={1.8}>
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <circle cx="9" cy="11" r="2" />
-              <path d="M5 17c1.2-2 2.6-3 4-3s2.8 1 4 3M15 9h4M15 13h4" strokeLinecap="round" />
-            </svg>
-          </div>
-          <div style={{ font: `700 14px ${FONT}`, color: INK }}>Worker access cards</div>
-          <div style={{ font: `500 12px/1.55 ${FONT}`, color: MUTED }}>
-            Print worker access-card stickers at cards.shakurs.com. You are signed in there
-            automatically with this same account.
-          </div>
-          <div style={{ font: `600 12px ${FONT}`, color: '#B8860B' }}>cards.shakurs.com →</div>
-        </a>
+      {/* One shared note instead of the same paragraph under each tile — it is
+          the same advice both times, and repeating it made the tiles different
+          heights. */}
+      <div
+        style={{
+          border: `1px solid ${LINE}`,
+          background: '#FAFAF9',
+          borderRadius: 12,
+          padding: '13px 15px',
+          font: `500 12.5px/1.6 ${FONT}`,
+          color: MUTED,
+          maxWidth: TILE_W * 3 + 36,
+        }}
+      >
+        <strong style={{ color: INK }}>Printing.</strong> Set <strong>Margins: None</strong>,{' '}
+        <strong>Background graphics: ON</strong> and <strong>Scale: 100%</strong>. The yellow field
+        is printed colour, so with background graphics off the sheet comes out blank.{' '}
+        <strong style={{ color: INK }}>PDF and PNG</strong> are rendered on the server at the exact
+        sizes above and need none of that — the PDF's page is the artwork itself, so it prints on A4
+        at 100% with margins.
       </div>
     </div>
   );

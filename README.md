@@ -93,12 +93,19 @@ form) that stores the request and emails the admin.
   the three cannot drift. `/requisites-print` sits outside `RequireAuth` on
   purpose — the API renders it from inside the Docker network where no browser
   session exists — and carries only the company's public invoice details.
-  > The header currently uses the SHAKUR **wordmark as a placeholder**: the
-  > full lockup SVG exceeds the design tool's 256 KiB read limit and the
-  > available PNGs are 206 × 137, far too coarse to print. The layout reserves
-  > the real lockup's exact slot, so dropping
-  > `public/assets/shakur_full_logo.svg` in and redeploying picks it up with
-  > no other change. The admin page shows a banner until then.
+  The header lockup is `public/assets/shakur_full_logo.svg` (viewBox
+  163 × 110). If it is ever missing the blocks fall back to
+  `shakur_wordmark.svg` and the admin page says so, so the page can never
+  render a broken image.
+  > Those two files are the only **non-fingerprinted** things under `/assets/`
+  > — the app asks for them by a fixed name — so `nginx.conf` gives them a
+  > 5-minute cache while Vite's hashed output keeps `immutable`. The same block
+  > also drops `always` from the `/assets/` Cache-Control header: with it,
+  > nginx put `immutable, max-age=31536000` on **404s** too, so a browser that
+  > loaded the page before the logo was uploaded cached "this file does not
+  > exist" for a year and kept showing the fallback long after deploy. The
+  > server-side PNG/PDF renderer uses a fresh browser each time and so was
+  > unaffected — which is what made the two disagree.
 - **Settings** — profile & password, site settings (title, tagline, contact,
   announcement bar, plus in v4: the **Live / Coming-soon status switch** with
   confirmation + amber warning banner, and the **logo carousel manager** — add
