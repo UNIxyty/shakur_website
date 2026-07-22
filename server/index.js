@@ -18,6 +18,7 @@ import {
 import { handleCreateConsultation } from './lib/consultations.js';
 import { handleMediaUpload } from './lib/media.js';
 import { startReminderLoop } from './lib/reminders.js';
+import { handleRequisites } from './lib/requisites.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -43,6 +44,9 @@ app.post('/api/consultations', rateLimiter(10, HOUR), handleCreateConsultation);
 // Media uploads — images + video (multipart; express.json ignores non-JSON
 // bodies, so no body-parser limit applies here — busboy streams to disk).
 app.post('/api/media', requireAdmin, handleMediaUpload);
+
+// Requisites blocks rendered by Playwright at exact size (admin only).
+app.get('/api/admin/requisites/:file', requireAdmin, handleRequisites);
 
 app.post('/api/admin/meetings/:id/cancel', requireAdmin, handleAdminCancel);
 app.post('/api/admin/meetings/:id/reschedule', requireAdmin, handleAdminReschedule);

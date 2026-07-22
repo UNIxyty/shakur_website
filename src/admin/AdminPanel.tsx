@@ -25,6 +25,7 @@ import ServicesView from './views/ServicesView';
 import AvailabilityView from './views/AvailabilityView';
 import MeetingsView from './views/MeetingsView';
 import SettingsView from './views/SettingsView';
+import UsefulFilesView from './views/UsefulFilesView';
 
 /**
  * Admin panel shell from ShakurAdminPanel.dc.html (+ the Dashboard entry from
@@ -74,6 +75,7 @@ type ViewKey =
   | 'services'
   | 'availability'
   | 'meetings'
+  | 'useful-files'
   | 'settings';
 
 const VIEW_META: Record<ViewKey, { title: string; subtitle: string; search?: string }> = {
@@ -103,6 +105,10 @@ const VIEW_META: Record<ViewKey, { title: string; subtitle: string; search?: str
     title: 'Meetings',
     subtitle: 'Bookings from the public site',
     search: 'Search attendees…',
+  },
+  'useful-files': {
+    title: 'Useful files',
+    subtitle: 'Company requisites to download or print, and the worker cards app',
   },
   settings: { title: 'Settings', subtitle: 'Manage your account and site' },
 };
@@ -430,6 +436,22 @@ export default function AdminPanel() {
               <IconCalendar size={19} stroke={s} strokeWidth={1.9} />
             ))}
             {navItem('meetings', 'Meetings', (s) => <NavIconMeetings stroke={s} />, upcomingCount)}
+            {navItem('useful-files', 'Useful files', (s) => (
+              <svg
+                width={18}
+                height={18}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={s}
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
+                <path d="M9 13h6M9 17h4" />
+              </svg>
+            ))}
             {navItem('settings', 'Settings', (s) => <NavIconSettings stroke={s} />)}
           </nav>
 
@@ -762,6 +784,7 @@ export default function AdminPanel() {
                 <Route path="services" element={<ServicesView />} />
                 <Route path="availability" element={<AvailabilityView />} />
                 <Route path="meetings" element={<MeetingsView />} />
+                <Route path="useful-files" element={<UsefulFilesView />} />
                 <Route path="settings" element={<SettingsView />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>

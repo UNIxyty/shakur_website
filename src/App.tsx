@@ -13,6 +13,7 @@ import Booking from './pages/Booking';
 import NotFound from './pages/NotFound';
 import ComingSoon from './pages/ComingSoon';
 import AdminLogin from './admin/AdminLogin';
+import RequisitesPrint from './pages/RequisitesPrint';
 import AdminPanel from './admin/AdminPanel';
 import RequireAuth from './admin/RequireAuth';
 import { useLang } from './lang';
@@ -108,6 +109,10 @@ export default function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/admin/login" element={<AdminLogin />} />
+        {/* Print/render view for the requisites blocks. Deliberately outside
+            RequireAuth: the API renders it from inside the Docker network for
+            the PNG/PDF downloads. Public invoice details only, noindex. */}
+        <Route path="/requisites-print" element={<RequisitesPrint />} />
         <Route
           path="/admin/*"
           element={

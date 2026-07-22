@@ -7,6 +7,15 @@ FROM node:22-alpine
 # clear "video processing unavailable" error — images keep working.
 RUN apk add --no-cache ffmpeg
 
+# Chromium for the requisites renderer (GET /api/admin/requisites/*). The distro
+# build is used deliberately: playwright-core never downloads browsers, so the
+# image stays small and there is no version drift between npm and the binary.
+# The page loads Inter/Cormorant as webfonts from the web container, so only the
+# base font stack is needed here — ttf-freefont keeps Chromium from failing on
+# a fontconfig with zero fonts.
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
 
 COPY server/package.json server/package-lock.json* ./
