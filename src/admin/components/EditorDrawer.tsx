@@ -551,7 +551,12 @@ export default function EditorDrawer({
             recordType={isProject ? 'projects' : 'services'}
             media={draft.media}
             cover={draft.cover}
-            onChange={(media, cover) => setDraft((d) => ({ ...d, media, cover }))}
+            onChange={(update) =>
+              setDraft((d) => {
+                const next = update({ media: d.media, cover: d.cover });
+                return { ...d, media: next.media, cover: next.cover };
+              })
+            }
           />
 
           {/* Describe it — AI writes the copy (design v3) */}

@@ -55,7 +55,16 @@ export default function MediaManager({
   recordType: 'projects' | 'services';
   media: MediaItem[];
   cover: string;
-  onChange: (media: MediaItem[], cover: string) => void;
+  /**
+   * All gallery mutations are FUNCTIONAL updates: the parent must apply
+   * `update` inside its own setState updater. Uploads finish on async timers,
+   * and several can land before the parent re-renders — an absolute
+   * (media, cover) payload computed from a prop snapshot loses every earlier
+   * completion in that window (the "only some images appear" bug).
+   */
+  onChange: (
+    update: (prev: { media: MediaItem[]; cover: string }) => { media: MediaItem[]; cover: string }
+  ) => void;
 }) {
   const { toast } = useAdminShell();
   const [uploads, setUploads] = useState<UploadRow[]>([]);
@@ -63,10 +72,10 @@ export default function MediaManager({
   const posterTarget = useRef<string | null>(null);
   const posterInputRef = useRef<HTMLInputElement>(null);
 
-  // Latest media/cover/uploads for async completions (avoids stale closures;
+  // Latest onChange/uploads for async completions (avoids stale closures;
   // side effects stay OUT of state updaters — StrictMode double-invokes them).
-  const latest = useRef({ media, cover, onChange });
-  latest.current = { media, cover, onChange };
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
   const uploadsRef = useRef<UploadRow[]>([]);
   uploadsRef.current = uploads;
 
@@ -90,12 +99,12 @@ export default function MediaManager({
     setTimeout(() => {
       const row = uploadsRef.current.find((r) => r.id === id);
       if (row) {
-        const { media: m, cover: c, onChange: apply } = latest.current;
+        const apply = onChangeRef.current;
         if (row.posterFor) {
-          apply(
-            m.map((it) => (it.id === row.posterFor ? { ...it, poster: resp.path } : it)),
-            c
-          );
+          apply(({ media: m, cover: c }) => ({
+            media: m.map((it) => (it.id === row.posterFor ? { ...it, poster: resp.path } : it)),
+            cover: c,
+          }));
           toast('Poster frame updated');
         } else {
           const item: MediaItem = {
@@ -105,7 +114,7 @@ export default function MediaManager({
             // Videos come back with a server-generated poster frame.
             ...(resp.kind === 'video' && resp.poster ? { poster: resp.poster } : {}),
           };
-          apply([...m, item], c || item.id);
+          apply(({ media: m, cover: c }) => ({ media: [...m, item], cover: c || item.id }));
         }
         if (row.thumb.startsWith('blob:')) URL.revokeObjectURL(row.thumb);
       }
@@ -191,25 +200,41 @@ export default function MediaManager({
   };
 
   // ---- gallery actions (design semantics: first item is the cover) ----
+  // Items are addressed by id captured at render time, then re-located inside
+  // the updater — an upload finishing mid-click can shift indexes.
   const setCover = (i: number) => {
-    const m = [...media];
-    const [it] = m.splice(i, 1);
-    m.unshift(it);
-    onChange(m, it.id);
+    const id = media[i]?.id;
+    if (!id) return;
+    onChange(({ media: m, cover: c }) => {
+      const idx = m.findIndex((it) => it.id === id);
+      if (idx < 0) return { media: m, cover: c };
+      const next = [...m];
+      const [it] = next.splice(idx, 1);
+      next.unshift(it);
+      return { media: next, cover: it.id };
+    });
     toast('Cover updated');
   };
   const moveMedia = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= media.length) return;
-    const m = [...media];
-    [m[i], m[j]] = [m[j], m[i]];
-    onChange(m, cover);
+    const id = media[i]?.id;
+    if (!id) return;
+    onChange(({ media: m, cover: c }) => {
+      const idx = m.findIndex((it) => it.id === id);
+      const j = idx + dir;
+      if (idx < 0 || j < 0 || j >= m.length) return { media: m, cover: c };
+      const next = [...m];
+      [next[idx], next[j]] = [next[j], next[idx]];
+      return { media: next, cover: c };
+    });
   };
   const delMedia = (i: number) => {
-    const m = media.filter((_, x) => x !== i);
-    let c = cover;
-    if (!m.find((it) => it.id === c)) c = m.length ? m[0].id : '';
-    onChange(m, c);
+    const id = media[i]?.id;
+    if (!id) return;
+    onChange(({ media: m, cover: c }) => {
+      const next = m.filter((it) => it.id !== id);
+      const stillCovered = next.some((it) => it.id === c);
+      return { media: next, cover: stillCovered ? c : next[0]?.id ?? '' };
+    });
   };
   const pickPoster = (id: string) => {
     posterTarget.current = id;
