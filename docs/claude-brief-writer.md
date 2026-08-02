@@ -19,7 +19,9 @@ translate** — you write the *brief* that the built-in copywriter consumes.
 
 - Each project or service editor has one brief box, **"Describe it — AI writes
   the copy"**. That single brief generates three fields in one pass:
-  - **Title** — 3–6 words, no trailing punctuation
+  - **Title** — 3–6 words, no trailing punctuation. If the brief names an
+    exact title to use verbatim (e.g. `Use the exact title "Kepler Club"`),
+    it is used unchanged even when it is only 1–2 words.
   - **Summary** — one sentence, about 20 words max
   - **Description** — 2–3 short paragraphs
 - A second brief box, **"Scope of work"** (projects) / **"Capabilities"**

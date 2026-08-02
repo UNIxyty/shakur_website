@@ -23,6 +23,9 @@ RUN npm ci --omit=dev
 
 COPY server/index.js ./
 COPY server/lib ./lib
+# Editable AI copywriter prompt (server/prompts/copywriter.system.txt): edit
+# it, then `docker compose up -d --build` — this COPY is what applies it.
+COPY server/prompts ./prompts
 COPY emails ./emails
 
 ENV NODE_ENV=production

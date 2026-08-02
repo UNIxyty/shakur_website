@@ -66,6 +66,15 @@ form) that stores the request and emails the admin.
     title, description and 2–4 bullets — all editable (add/remove card and bullet,
     regenerate). Falls back to built-in sample copy when the server or key is
     unavailable, so the flow always works.
+  - **Editable system prompt.** The copywriter's persona/voice instructions live in
+    `server/prompts/copywriter.system.txt` — plain text, not code. To change how the
+    AI writes: edit that file, then apply with **`docker compose up -d --build`**
+    (the prompt is baked into the api image at build time). The committed original
+    is preserved in `server/prompts/copywriter.system.default.txt`; if the active
+    file is missing/empty at startup the server logs an `[ai]` warning and falls
+    back to the default (then to a built-in copy) — the feature never crashes over
+    a missing prompt file. A brief that names an exact 1–2-word title is used
+    verbatim (the 3–6-word title guidance yields to explicit names).
 - **Home page** — the public home CMS, section by section: **Hero**, **Partner
   block**, **CTA banner** (image sections with a preset picker + real upload through
   the media pipeline) and **Text & translations** (EN/LV/RU tabs with completion

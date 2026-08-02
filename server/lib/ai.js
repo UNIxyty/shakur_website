@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { env } from './shared.js';
 
 const FIELD_TYPES = ['title', 'summary', 'description', 'capabilities'];
@@ -46,7 +47,15 @@ const CAPABILITIES_FORMAT = {
   },
 };
 
-const SYSTEM_PROMPT = [
+/**
+ * The copywriter's system prompt lives in an editable file, NOT in code:
+ * edit server/prompts/copywriter.system.txt, then `docker compose up -d
+ * --build` to apply. Loaded once at startup. Fallback chain — active file →
+ * committed default (copywriter.system.default.txt) → the built-in string
+ * below — each miss logs a warning; the AI feature never crashes over a
+ * missing prompt file.
+ */
+const BUILTIN_SYSTEM_PROMPT = [
   'You are the copywriter for SHAKUR, a Baltic construction and interior-finishing',
   'company (drywall, finishing, wood construction, masonry, flooring, emergency works).',
   'Brand voice: confident, professional, concise. Concrete construction terminology,',
@@ -59,6 +68,37 @@ const SYSTEM_PROMPT = [
   'Write ONLY about the work the note describes; never pad with unrelated trades',
   '(a drywall brief must not produce masonry copy).',
 ].join(' ');
+
+function loadSystemPrompt() {
+  const candidates = [
+    ['prompts/copywriter.system.txt', new URL('../prompts/copywriter.system.txt', import.meta.url)],
+    [
+      'prompts/copywriter.system.default.txt',
+      new URL('../prompts/copywriter.system.default.txt', import.meta.url),
+    ],
+  ];
+  for (let i = 0; i < candidates.length; i++) {
+    const [label, url] = candidates[i];
+    try {
+      const text = readFileSync(url, 'utf8').trim();
+      if (text) {
+        if (i > 0) {
+          console.warn(
+            `[ai] ${candidates[0][0]} missing or empty — using the committed default (${label})`,
+          );
+        }
+        return text;
+      }
+      console.warn(`[ai] ${label} is empty — trying the next fallback`);
+    } catch (err) {
+      console.warn(`[ai] cannot read ${label} (${err.code || err.message}) — trying the next fallback`);
+    }
+  }
+  console.warn('[ai] no prompt file readable — using the built-in system prompt');
+  return BUILTIN_SYSTEM_PROMPT;
+}
+
+const SYSTEM_PROMPT = loadSystemPrompt();
 
 const isL10n = (v) =>
   v &&
@@ -116,6 +156,8 @@ export async function handleAiWrite(req, res) {
   const guidance = {
     title:
       'Write a short page/card title (3–6 words) drawn from the brief below. ' +
+      'Exception: if the brief names an exact title/project name to use verbatim, ' +
+      'use that name unchanged even when it is only 1–2 words. ' +
       'No trailing punctuation.',
     summary: 'Write a one-sentence card summary (max ~20 words) drawn from the brief below.',
     description:
