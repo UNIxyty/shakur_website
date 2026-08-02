@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import type { L10n, Lang, MediaItem, ProjectRow, ServiceRow } from '../../lib/db';
 import { emptyL10n } from '../../lib/db';
@@ -17,7 +17,14 @@ import { useAdminShell } from './context';
 import MediaManager from './MediaManager';
 import CapabilitiesEditor, { type CapabilitiesValue } from './CapabilitiesEditor';
 import AiAction from './AiAction';
-import { aiWriteText, type AiState, type AiTextField } from './ai';
+import {
+  aiWriteFacts,
+  aiWriteText,
+  normalizeAiDate,
+  type AiFacts,
+  type AiState,
+  type AiTextField,
+} from './ai';
 import { Field, FONT, IconClose, focusHandlers, inputStyle, monoInputStyle } from './ui';
 
 /**
@@ -253,15 +260,74 @@ export default function EditorDrawer({
     }
   };
 
-  // Design v3 _aiWriteAll: fills title, summary & description sequentially.
+  /**
+   * v8 field connectivity: stated shared facts flow from the brief onto the
+   * editor's structured inputs. Only non-null facts apply (the model returns
+   * null for anything the brief doesn't state); enum fields must match the
+   * dropdown options; partial dates land on the period boundary that fits the
+   * field (start → first day, end → last day). Everything stays editable.
+   */
+  const applyFacts = (f: AiFacts): number => {
+    const text = (v: string | null) => (v && v.trim() ? v.trim() : null);
+    const pick = (v: string | null, options: readonly string[]) => {
+      const t = text(v);
+      return (t && options.find((o) => o.toLowerCase() === t.toLowerCase())) || null;
+    };
+    const patch: Partial<typeof draft> = {};
+    if (isProject) {
+      const service = pick(f.service, SERVICE_OPTIONS);
+      const status = pick(f.status, STATUSES);
+      const start = normalizeAiDate(f.start_date, 'start');
+      const end = normalizeAiDate(f.end_date, 'end');
+      if (service) patch.service = service;
+      if (status) patch.status = status as ProjectStatus;
+      if (text(f.client)) patch.client = text(f.client) as string;
+      if (text(f.location)) patch.loc = text(f.location) as string;
+      if (start) patch.start = start;
+      if (end) patch.end = end;
+      if (text(f.country)) patch.country = text(f.country) as string;
+      if (text(f.city)) patch.city = text(f.city) as string;
+      if (text(f.url)) patch.url = text(f.url) as string;
+    } else {
+      const category = pick(f.category, CATEGORIES);
+      if (category) patch.category = category as (typeof CATEGORIES)[number];
+    }
+    const applied = Object.keys(patch).length;
+    if (applied) setDraft((d) => ({ ...d, ...patch }));
+    return applied;
+  };
+
+  // Design v3 _aiWriteAll: fills title, summary & description sequentially,
+  // then (v8) extracts the shared fields from the same brief.
   const generateFields = async () => {
     if (briefBusy) return;
     setBriefBusy(true);
     for (const f of ['title', 'summary', 'description'] as AiTextField[]) {
       await runAiText(f);
     }
+    if (brief.trim()) {
+      const facts = await aiWriteFacts(brief.trim());
+      if (facts) {
+        const n = applyFacts(facts);
+        if (n > 0) toast(`${n} detail ${n === 1 ? 'field' : 'fields'} filled from the brief`);
+      }
+    }
     setBriefBusy(false);
   };
+
+  // Stable identity keeps the memoized MediaManager from re-rendering on
+  // every drawer keystroke (setDraft itself is stable).
+  const handleMediaChange = useCallback(
+    (update: (prev: { media: typeof draft.media; cover: string }) => {
+      media: typeof draft.media;
+      cover: string;
+    }) =>
+      setDraft((d) => {
+        const next = update({ media: d.media, cover: d.cover });
+        return { ...d, media: next.media, cover: next.cover };
+      }),
+    []
+  );
 
   // ---- persist to Supabase ----
   const commit = async (publish: boolean) => {
@@ -551,12 +617,7 @@ export default function EditorDrawer({
             recordType={isProject ? 'projects' : 'services'}
             media={draft.media}
             cover={draft.cover}
-            onChange={(update) =>
-              setDraft((d) => {
-                const next = update({ media: d.media, cover: d.cover });
-                return { ...d, media: next.media, cover: next.cover };
-              })
-            }
+            onChange={handleMediaChange}
           />
 
           {/* Describe it — AI writes the copy (design v3) */}

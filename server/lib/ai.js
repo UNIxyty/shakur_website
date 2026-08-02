@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { env } from './shared.js';
 
-const FIELD_TYPES = ['title', 'summary', 'description', 'capabilities'];
+const FIELD_TYPES = ['title', 'summary', 'description', 'capabilities', 'facts'];
 
 const L10N_SCHEMA = {
   type: 'object',
@@ -100,6 +100,70 @@ function loadSystemPrompt() {
 
 const SYSTEM_PROMPT = loadSystemPrompt();
 
+/**
+ * fieldType 'facts' (v8): extract the editor's SHARED (not per-language)
+ * fields from the brief. Every property is string-or-null; null = the brief
+ * does not state it. Enums mirror the editor's dropdowns exactly
+ * (SERVICE_OPTIONS / STATUSES / service categories in src).
+ */
+const FACTS_SERVICE_OPTIONS = [
+  'Drywall',
+  'Interior Finishing',
+  'Wood Construction',
+  'Masonry',
+  'Flooring',
+  'Emergency',
+];
+const FACTS_STATUS_OPTIONS = ['In Progress', 'Completed', 'Paused'];
+const FACTS_CATEGORY_OPTIONS = ['Construction', 'Finishing', 'Support'];
+
+const nullable = (extra = {}) => ({ type: ['string', 'null'], ...extra });
+const FACTS_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'start_date',
+    'end_date',
+    'country',
+    'city',
+    'client',
+    'service',
+    'status',
+    'location',
+    'url',
+    'category',
+  ],
+  properties: {
+    start_date: nullable({
+      description: "Start of the works, only as precisely as stated: 'YYYY-MM-DD', 'YYYY-MM', 'YYYY-Qn' or 'YYYY'.",
+    }),
+    end_date: nullable({
+      description: "End/handover of the works, only as precisely as stated: 'YYYY-MM-DD', 'YYYY-MM', 'YYYY-Qn' or 'YYYY'.",
+    }),
+    country: nullable({ description: 'Country name in English, e.g. Latvia.' }),
+    city: nullable({ description: 'City with native spelling/diacritics, e.g. Rīga.' }),
+    client: nullable({ description: 'Client exactly as the brief names it.' }),
+    service: nullable({ enum: [...FACTS_SERVICE_OPTIONS, null], description: 'Project service type — closest match, else null.' }),
+    status: nullable({ enum: [...FACTS_STATUS_OPTIONS, null], description: 'Project status; a delivered/handed-over project is Completed.' }),
+    location: nullable({ description: 'District/address details beyond city, e.g. Teika, Brīvības iela 12.' }),
+    url: nullable({ description: "The project's own official website URL, if the brief gives one." }),
+    category: nullable({ enum: [...FACTS_CATEGORY_OPTIONS, null], description: 'Service category (services only).' }),
+  },
+};
+
+const FACTS_FORMAT = {
+  type: 'json_schema',
+  json_schema: { name: 'shared_fields', strict: true, schema: FACTS_SCHEMA },
+};
+
+const isFactsShape = (v) =>
+  v &&
+  typeof v === 'object' &&
+  !Array.isArray(v) &&
+  Object.keys(FACTS_SCHEMA.properties).every(
+    (k) => v[k] === null || typeof v[k] === 'string',
+  );
+
 const isL10n = (v) =>
   v &&
   typeof v === 'object' &&
@@ -151,14 +215,19 @@ export async function handleAiWrite(req, res) {
   }
 
   const isCaps = fieldType === 'capabilities';
+  const isFacts = fieldType === 'facts';
   // v3: describe-driven — the copy is generated FROM the brief, not rewritten
   // from the field's current contents (`existing` is context only).
   const guidance = {
     title:
-      'Write a short page/card title (3–6 words) drawn from the brief below. ' +
-      'Exception: if the brief names an exact title/project name to use verbatim, ' +
-      'use that name unchanged even when it is only 1–2 words. ' +
-      'No trailing punctuation.',
+      'Write the Title. The admin marks whether it is a name or a phrase — never guess: ' +
+      'a brief line "Title: X" (or "Name: X") means X is a proper name — output X verbatim, ' +
+      'byte-identical in en, lv and ru, diacritics preserved, nothing added, nothing translated. ' +
+      'A line "Title (translate): X" means X is descriptive — translate it idiomatically per ' +
+      'language, keeping embedded proper nouns verbatim. With neither marker, use the shortest ' +
+      'proper name found in the brief, kept verbatim in all three languages; never build a ' +
+      'descriptive title from the work performed. Titles of 1–2 words are valid for real names. ' +
+      'No trailing punctuation. This rule overrides the general translate-idiomatically instruction.',
     summary: 'Write a one-sentence card summary (max ~20 words) drawn from the brief below.',
     description:
       'Write body copy of 2–3 short paragraphs drawn from the brief below, ' +
@@ -167,6 +236,13 @@ export async function handleAiWrite(req, res) {
       'Write 1 to 6 capability cards — only as many as the content genuinely needs — ' +
       'numbered "01", "02", … Each has a short title (2–4 words), a one-line ' +
       'description, and 2–4 short bullet points.',
+    facts:
+      'Do NOT write copy. Extract the shared editor fields from the brief below. ' +
+      'Fill a field ONLY when the brief actually states it — never infer or invent a ' +
+      'date, country, city, client, URL or status that is not written there; use null ' +
+      'for everything not stated. Dates only as precisely as given: YYYY-MM-DD, ' +
+      'YYYY-MM, YYYY-Qn or YYYY. These fields are shared across languages — plain ' +
+      'strings, no translation.',
   }[fieldType];
 
   const user = [
@@ -181,7 +257,7 @@ export async function handleAiWrite(req, res) {
     const openai = await getOpenAI();
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      response_format: isCaps ? CAPABILITIES_FORMAT : TEXT_FORMAT,
+      response_format: isCaps ? CAPABILITIES_FORMAT : isFacts ? FACTS_FORMAT : TEXT_FORMAT,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: user },
@@ -200,6 +276,12 @@ export async function handleAiWrite(req, res) {
         return res.status(502).json({ error: 'Model returned an unexpected shape' });
       }
       return res.json({ items: parsed.items });
+    }
+    if (isFacts) {
+      if (!isFactsShape(parsed)) {
+        return res.status(502).json({ error: 'Model returned an unexpected shape' });
+      }
+      return res.json({ facts: parsed });
     }
     if (!isL10n(parsed)) {
       return res.status(502).json({ error: 'Model returned an unexpected shape' });

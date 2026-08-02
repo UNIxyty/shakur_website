@@ -61,7 +61,15 @@ form) that stores the request and emails the admin.
   - **Write with AI — describe-driven.** Each drawer has a "Describe it" brief box:
     describe the record in any language and the AI writes the title, summary and
     description in **all three languages at once** (server-side OpenAI, structured
-    output). The service drawer's separate "Scope of work" box generates a **dynamic
+    output). The Title is marker-controlled, never guessed: a `Title: X` line in the
+    brief keeps X verbatim and byte-identical in EN/LV/RU (1–2-word names are valid);
+    `Title (translate): X` translates the phrase per language; with no marker the
+    shortest proper name in the brief is kept verbatim. The same brief also fills the
+    **shared detail fields** it states — start/end date, country, city, client,
+    service type, status, location, URL — and never invents unstated ones; partial
+    dates land on the period boundary (start → first day, end → last day, so
+    "2023" → 2023-01-01 / 2023-12-31, "Q2 2021" → 2021-04-01 / 2021-06-30). Every
+    auto-filled field stays editable. The service drawer's separate "Scope of work" box generates a **dynamic
     1–6 capability cards** (the model decides how many the content needs), each with
     title, description and 2–4 bullets — all editable (add/remove card and bullet,
     regenerate). Falls back to built-in sample copy when the server or key is
@@ -350,7 +358,10 @@ Node 22 + Express, proxied by nginx at `/api/`:
   best-effort — a provider failure never loses the stored request.
 - `POST /api/media` — media upload (admin JWT required) for the home CMS, the
   project/service galleries, and the logo carousel. Images (≤15 MB) stream to the
-  local media volume and respond immediately. **Videos (mp4/mov/webm, ≤512 MB)**
+  local media volume and respond immediately, plus a ≤480px `<name>.thumb.jpg`
+  (ffmpeg) that the editor gallery renders instead of the full-res original —
+  thumbnail failure only logs, never fails the upload; pre-thumbnail media falls
+  back to the original. **Videos (mp4/mov/webm, ≤512 MB)**
   are transcoded in-request with ffmpeg to a web-optimized H.264/AAC mp4
   (`+faststart`, ≤1080p, stream-copy when the source is already H.264) and get an
   auto-generated jpg poster. Everything then replicates to Supabase Storage in the

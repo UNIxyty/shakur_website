@@ -7,8 +7,64 @@ import type { Capability, L10n } from '../../lib/db';
  */
 
 export type AiTextField = 'title' | 'summary' | 'description';
-export type AiFieldType = AiTextField | 'capabilities';
+export type AiFieldType = AiTextField | 'capabilities' | 'facts';
 export type AiState = 'idle' | 'gen' | 'done' | 'err';
+
+/** Shared (not per-language) editor fields extracted from the brief (v8). */
+export type AiFacts = {
+  start_date: string | null;
+  end_date: string | null;
+  country: string | null;
+  city: string | null;
+  client: string | null;
+  service: string | null;
+  status: string | null;
+  location: string | null;
+  url: string | null;
+  category: string | null;
+};
+
+/**
+ * Normalizes an extracted date to the DatePicker's ISO 'YYYY-MM-DD', mapping
+ * partial precision onto the period boundary that fits the field: start dates
+ * take the FIRST day of the stated period, end dates the LAST.
+ *   '2023'    → start 2023-01-01 / end 2023-12-31
+ *   '2021-Q2' → start 2021-04-01 / end 2021-06-30
+ *   '2024-03' → start 2024-03-01 / end 2024-03-31
+ *   '2024-03-15' → as-is. Anything unparsable → '' (field stays empty).
+ */
+export function normalizeAiDate(raw: string | null | undefined, edge: 'start' | 'end'): string {
+  if (!raw) return '';
+  const v = raw.trim();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const lastDay = (y: number, m: number) => new Date(y, m, 0).getDate();
+
+  let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    return mo >= 1 && mo <= 12 && d >= 1 && d <= lastDay(y, mo) ? v : '';
+  }
+  m = /^(\d{4})-(\d{2})$/.exec(v);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    if (mo < 1 || mo > 12) return '';
+    return edge === 'start' ? `${m[1]}-${m[2]}-01` : `${m[1]}-${m[2]}-${pad(lastDay(y, mo))}`;
+  }
+  m = /^(\d{4})-?Q([1-4])$/i.exec(v);
+  if (m) {
+    const y = m[1];
+    const q = Number(m[2]);
+    return edge === 'start'
+      ? `${y}-${pad(q * 3 - 2)}-01`
+      : `${y}-${pad(q * 3)}-${pad(lastDay(Number(y), q * 3))}`;
+  }
+  m = /^(\d{4})$/.exec(v);
+  if (m) return edge === 'start' ? `${v}-01-01` : `${v}-12-31`;
+  return '';
+}
 
 export type AiCapabilityItem = {
   number: string;
@@ -195,6 +251,32 @@ export async function aiWriteText(
   } catch {
     await delay(1100);
     return aiMockText(field, note);
+  }
+}
+
+/**
+ * Shared fields extracted from the brief (v8): dates, country, city, client,
+ * service/category, status, location, url — null for anything the brief does
+ * not state. NO mock fallback: when the endpoint is unavailable this resolves
+ * to null and the fields simply stay as they are — an offline demo must never
+ * invent facts.
+ */
+export async function aiWriteFacts(note: string): Promise<AiFacts | null> {
+  try {
+    const res = await fetch('/api/ai/write', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note, fieldType: 'facts' }),
+    });
+    if (!res.ok) throw new Error(`ai/write ${res.status}`);
+    const out: unknown = await res.json();
+    const facts = (out as { facts?: unknown }).facts;
+    if (!facts || typeof facts !== 'object' || Array.isArray(facts)) {
+      throw new Error('ai/write bad shape');
+    }
+    return facts as AiFacts;
+  } catch {
+    return null;
   }
 }
 

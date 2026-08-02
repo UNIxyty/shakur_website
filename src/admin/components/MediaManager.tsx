@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import type { MediaItem } from '../../lib/db';
 import { supabase } from '../../lib/supabase';
 import { assetUrl } from '../../lib/assets';
@@ -23,6 +23,7 @@ type MediaUploadResponse = {
   id: string;
   kind?: 'image' | 'video';
   path: string;
+  thumb?: string;
   poster?: string;
   supabaseUrl?: string;
   posterSupabaseUrl?: string;
@@ -46,7 +47,7 @@ type UploadRow = {
   xhr?: XMLHttpRequest;
 };
 
-export default function MediaManager({
+function MediaManager({
   recordType,
   media,
   cover,
@@ -113,6 +114,8 @@ export default function MediaManager({
             src: resp.path,
             // Videos come back with a server-generated poster frame.
             ...(resp.kind === 'video' && resp.poster ? { poster: resp.poster } : {}),
+            // Images (v8) with a server-generated gallery thumbnail.
+            ...(resp.kind !== 'video' && resp.thumb ? { thumb: resp.thumb } : {}),
           };
           apply(({ media: m, cover: c }) => ({ media: [...m, item], cover: c || item.id }));
         }
@@ -605,7 +608,9 @@ export default function MediaManager({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
             {media.map((m, i) => {
               const isCover = m.id === coverId;
-              const thumbSrc = m.type === 'video' ? m.poster || '' : m.src;
+              // v8: images render their ≤480px thumb (original only as a
+              // fallback for pre-thumbnail uploads); videos their poster.
+              const thumbSrc = m.type === 'video' ? m.poster || '' : m.thumb || m.src;
               return (
                 <div
                   key={m.id}
@@ -620,13 +625,22 @@ export default function MediaManager({
                   }}
                 >
                   {thumbSrc && (
-                    <div
+                    // Real <img> (not background-image) so the browser can
+                    // lazy-load offscreen tiles and decode off the main
+                    // thread; the aspect-ratio box above reserves the layout.
+                    <img
+                      src={assetUrl(thumbSrc)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width={480}
+                      height={360}
                       style={{
                         width: '100%',
                         height: '100%',
-                        backgroundImage: `url(${JSON.stringify(assetUrl(thumbSrc))})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: '50% 50%',
+                        display: 'block',
+                        objectFit: 'cover',
+                        objectPosition: '50% 50%',
                       }}
                     />
                   )}
@@ -775,3 +789,11 @@ export default function MediaManager({
     </div>
   );
 }
+
+/**
+ * Memoized (v8): the drawer re-renders on every keystroke in any text field,
+ * and this subtree is by far its heaviest (upload rows + up to 20 gallery
+ * tiles). With a stable onChange from the drawer (useCallback) the props are
+ * referentially unchanged while typing, so typing skips this tree entirely.
+ */
+export default memo(MediaManager);

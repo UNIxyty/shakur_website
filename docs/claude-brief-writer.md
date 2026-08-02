@@ -19,11 +19,28 @@ translate** — you write the *brief* that the built-in copywriter consumes.
 
 - Each project or service editor has one brief box, **"Describe it — AI writes
   the copy"**. That single brief generates three fields in one pass:
-  - **Title** — 3–6 words, no trailing punctuation. If the brief names an
-    exact title to use verbatim (e.g. `Use the exact title "Kepler Club"`),
-    it is used unchanged even when it is only 1–2 words.
+  - **Title** — controlled by an explicit marker line; the generator never
+    guesses:
+    - `Title: <name>` → the name is kept **verbatim**, byte-identical in all
+      three languages, diacritics preserved, nothing added or translated
+      (`Title: Kuldīgas parks` → "Kuldīgas parks" in EN, LV and RU alike).
+      1–2-word names are fine.
+    - `Title (translate): <phrase>` → a **descriptive** title, translated
+      idiomatically per language; proper nouns inside it stay verbatim.
+    - No marker → the shortest proper name in the brief, kept verbatim.
+    **Every main brief you write must start with one of the two marker
+    lines** — ask me for the project's name if I didn't give one.
   - **Summary** — one sentence, about 20 words max
   - **Description** — 2–3 short paragraphs
+- The same single brief also fills the editor's **shared detail fields** when
+  (and only when) the brief states them: start date, end date, country, city,
+  client, service type (Drywall / Interior Finishing / Wood Construction /
+  Masonry / Flooring / Emergency), project status, location details
+  (district/address), website URL. Nothing is invented — an unstated field
+  stays empty. So state these facts plainly and unambiguously in the brief.
+  Dates are used only as precisely as given; a partial date lands on the
+  matching period boundary (start date → first day, end date → last day:
+  "2023" → 2023-01-01 / 2023-12-31, "Q2 2021" → 2021-04-01 / 2021-06-30).
 - A second brief box, **"Scope of work"** (projects) / **"Capabilities"**
   (services), turns a brief into **1–6 numbered cards**, each with a 2–4-word
   title, a one-line description and 2–4 short bullets. The generator makes
@@ -93,12 +110,14 @@ Your reply:
 
 > **Main brief** — paste into "Describe it — AI writes the copy"
 >
-> Two-floor office fit-out, 480 m² in Teika, Riga, for an IT company's head
-> office. Metal-stud drywall partitions with acoustic insulation, suspended
-> ceilings, full surface preparation and painting, and LVT flooring
-> throughout. The building remained occupied, so all noisy works ran in
-> evening shifts and each floor was handed over in phases. Completed in 9
-> weeks, handed over March 2026 with all rooms move-in ready.
+> Title: Kepler Club
+>
+> Two-floor office fit-out, 480 m² in Teika, Rīga, Latvia, for an IT
+> company's head office. Metal-stud drywall partitions with acoustic
+> insulation, suspended ceilings, full surface preparation and painting, and
+> LVT flooring throughout. The building remained occupied, so all noisy works
+> ran in evening shifts and each floor was handed over in phases. Completed
+> in 9 weeks, handed over March 2026 with all rooms move-in ready.
 >
 > **Scope brief** — paste into "Scope of work"
 >

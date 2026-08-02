@@ -8,7 +8,14 @@
 
 export type Lang = 'en' | 'lv' | 'ru';
 export type L10n = Record<Lang, string>;
-export type MediaItem = { id: string; type: 'image' | 'video'; src: string; poster?: string };
+export type MediaItem = {
+  id: string;
+  type: 'image' | 'video';
+  src: string;
+  poster?: string;
+  /** ≤480px editor-gallery thumbnail (v8); absent on media uploaded earlier. */
+  thumb?: string;
+};
 export type Capability = { number: string; title: L10n; description: L10n; bullets: L10n[] };
 
 export type ProjectRow = {

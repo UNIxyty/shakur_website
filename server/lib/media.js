@@ -331,11 +331,36 @@ async function insertMediaRow(row) {
   return res.data;
 }
 
-/** v3 image path — unchanged behavior/response shape (row now carries kind). */
+/**
+ * v8: editor-gallery thumbnail — ≤480px-wide jpg next to the original
+ * (<basename>.thumb.jpg). Fail-open: a thumbnail error only logs; the upload
+ * itself always succeeds (older images without a thumb fall back to the
+ * original in the UI).
+ */
+async function makeImageThumb(srcPath, destDir, basename) {
+  const thumbName = `${basename}.thumb.jpg`;
+  const thumbPath = join(destDir, thumbName);
+  try {
+    await run(
+      'ffmpeg',
+      ['-y', '-i', srcPath, '-frames:v', '1',
+       '-vf', "scale=w='min(480,iw)':h=-2", '-q:v', '5', thumbPath],
+      60 * 1000,
+    );
+    return { thumbName, thumbPath };
+  } catch (err) {
+    console.warn('[media:thumb] failed, serving original in gallery:', err.stderrText || err.message);
+    await unlink(thumbPath).catch(() => {});
+    return null;
+  }
+}
+
+/** v3 image path + v8 thumbnail (response gains `thumb` when one was made). */
 async function finishImage(file, answer) {
   const filename = file.path.slice(file.path.lastIndexOf('/') + 1);
   const publicPath = `/media/${filename}`;
   const supabaseUrl = bucketUrl(filename);
+  const thumb = await makeImageThumb(file.path, env.mediaDir, filename.replace(/\.[^.]+$/, ''));
   try {
     const row = await insertMediaRow({
       filename,
@@ -348,12 +373,22 @@ async function finishImage(file, answer) {
       kind: 'image',
     });
 
-    answer(201, { id: row.id, path: publicPath, supabaseUrl, replication: 'pending' });
+    answer(201, {
+      id: row.id,
+      path: publicPath,
+      ...(thumb ? { thumb: `/media/${thumb.thumbName}` } : {}),
+      supabaseUrl,
+      replication: 'pending',
+    });
     // Fire-and-forget: replicate to the `media` bucket after responding.
-    replicateToBucket(row.id, [{ path: file.path, name: filename, mime: file.mime }]);
+    replicateToBucket(row.id, [
+      { path: file.path, name: filename, mime: file.mime },
+      ...(thumb ? [{ path: thumb.thumbPath, name: thumb.thumbName, mime: 'image/jpeg' }] : []),
+    ]);
   } catch (err) {
     console.error('[media:create]', err.message);
     unlink(file.path).catch(() => {});
+    if (thumb) unlink(thumb.thumbPath).catch(() => {});
     answer(502, { error: 'Could not record the upload' });
   }
 }

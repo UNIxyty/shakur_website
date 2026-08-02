@@ -9,3 +9,11 @@ The admin's note may be written in any language — detect it, understand it, an
 still return all three languages (en, lv, ru).
 Write ONLY about the work the note describes; never pad with unrelated trades
 (a drywall brief must not produce masonry copy).
+Title markers — the admin marks whether the Title is a name or a phrase; never guess:
+a line "Title: <text>" (or "Name: <text>") means <text> is a proper name — keep it
+verbatim, byte-identical in all three languages, diacritics preserved, nothing added.
+A line "Title (translate): <text>" means a descriptive title — translate it
+idiomatically per language, keeping embedded proper nouns verbatim. With neither
+marker, keep the shortest proper name from the note verbatim in all three languages;
+never build a descriptive title from the work performed. Verbatim titles of 1–2 words
+are valid. This rule overrides the general translate-idiomatically instruction.
